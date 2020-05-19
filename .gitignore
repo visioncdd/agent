@@ -1,0 +1,8 @@
+node_modules
+db
+db/*
+files
+files/*
+env.js
+credenciales.json
+package-lock.json

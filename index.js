@@ -1,0 +1,546 @@
+var moment = require('moment')
+moment.locale('es');
+
+
+var _ = require('lodash')
+
+var express = require('express')
+var app = require('express')();
+var cors = require('cors')
+var http = require('http').Server(app);
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var mkdirp = require('mkdirp');
+const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
+
+var env = require('./env')
+
+http.timeout = 120000 * 5;
+http.keepAliveTimeout = 60000 * 2;
+
+const client = new MongoClient(env.mongodbUrl);
+
+// Use connect method to connect to the Server
+client.connect(function(err) {
+
+	console.log(err)
+
+  console.log("Connected successfully to server");
+
+  const db1 = client.db('agente');
+
+  db1.collection('productos').createIndex({name: "text"})
+  // db1.collection('productos').createIndex({preffix: "text"})
+  db1.collection('acciones').createIndex({term: "text"})
+  db1.collection('cantidades').createIndex({numero: "text",letra: "text"})
+
+
+	app.use(bodyParser.json()); 
+	app.use(bodyParser.urlencoded({ extended: true }));
+	app.use(cors())
+
+	var cuentas = 'Banesco 0134'
+
+	function searchProduct(text){
+		return new Promise(resolve => {
+
+			db1.collection('productos')
+			.aggregate([{
+				$match: {
+					$text: {
+						$search: text
+					},
+					quantity: {
+						$gt: 0
+					}
+				}
+			},{
+				$sort: {
+					score: {
+						$meta: "textScore"
+					}
+				}
+			},{
+				$project: {
+					name: 1,
+					price: 1,
+					quantity: 1,
+					currency: 1,
+					real_name: 1,
+					_id: 1,
+					score: {
+						$meta: "textScore"
+					}
+				}
+			}], function(err, data){
+				
+				data.toArray(function(err,list){
+					
+					var result = []
+
+					if(list.length){
+						result.push(list[0])
+						var score = list[0].score
+
+						list.filter((v,k) => k > 0).forEach(v => {
+							if(v.score == score)
+								result.push(v)
+						})
+					}
+
+					resolve(result)
+				})
+			})
+
+		})
+	}
+
+	function getAction(text){
+		return new Promise(resolve => {
+
+			db1.collection('acciones')
+			.aggregate([{
+				$match: {
+					$text: {
+						$search: text
+					}
+				}
+			},{
+				$sort: {
+					score: {
+						$meta: "textScore"
+					}
+				}
+			}], function(err, data){
+				
+				data.limit(1).toArray(function(err,list){
+					resolve(list.length ? list[0].action : null)
+				})
+			})
+
+		})
+	}
+
+	function getQuantity(text){
+		return new Promise(resolve => {
+
+			db1.collection('cantidades')
+			.aggregate([{
+				$match: {
+					$text: {
+						$search: text
+					}
+				}
+			},{
+				$sort: {
+					score: {
+						$meta: "textScore"
+					}
+				}
+			}], function(err, data){
+				
+				data.limit(1).toArray(function(err,list){
+					resolve(list.length ? list[0].cantidad : null)
+				})
+			})
+
+		})
+	}
+
+	function chatActive(sender){
+		return new Promise(resolve => {
+
+			db1.collection('mensajes').findOne({
+				sender
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, message) => {
+				if(!message)
+					return resolve(false)
+				var date = moment(message.createdAt)
+				var now = moment()
+				var diff = now.diff(date, 'hour')
+				resolve(diff < 1)
+			})
+
+		})
+	}
+
+	function lastRequest(sender){
+		return new Promise(resolve => {
+
+			db1.collection('solicitudes').findOne({
+				sender
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, data) => {
+				if(!data)
+					return resolve({productos: [], consultas: [], sender})
+				var date = moment(data.createdAt)
+				var now = moment()
+				var diff = now.diff(date, 'hours')
+				resolve(diff < 1 ? data : {productos: [], consultas: [], sender})
+			})
+
+		})
+	}
+
+	function saveMessage(message){
+		return new Promise(resolve => {
+
+			db1.collection('mensajes').insertOne({
+				...message,
+				createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+			}, {}, (err, doc) => resolve(doc))
+
+		})
+	}
+
+	function saveRequest(request){
+		return new Promise(resolve => {
+
+			var data = {
+				...request,
+				createdAt: request.createdAt || moment().format('YYYY-MM-DD HH:mm:ss'),
+				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+			}
+
+			if(request._id)
+				db1.collection('solicitudes').update({ _id: request._id }, data, { upsert: true }, (err, doc) => resolve(doc))
+			else
+				db1.collection('solicitudes').insert(data, (err, doc) => resolve(doc))
+
+		})
+	}
+
+	function setRequestProduct(solicitud, data, cantidad){
+		if(!solicitud.productos.find(v => String(v._id) == String(data[0]._id)))
+			return [...solicitud.productos, {
+				...data[0],
+				cantidad
+			}]
+		else
+			return solicitud.productos.map(v => {
+				if(String(v._id) == String(data[0]._id))
+					return {
+						...v,
+						cantidad
+					}
+				else
+					return v
+			})
+	}
+
+	function finalMessage(solicitud, type){
+		var message = ""
+
+		if(['delivery_pedido','pedido','delivery'].indexOf(type) !== -1){
+
+			if(!solicitud.productos.length)
+				message = " ¿Quieres realizar algún pedido?"
+			else{
+				message = " ¿Quieres algo más?"
+			}
+			
+			solicitud.last_state = 'question_more'	
+
+		}
+
+		return message
+	}
+
+	function nextStep(solicitud){
+		var message = ""
+		solicitud.no_more = true
+
+		for(var i in solicitud.productos){
+			if(!solicitud.productos[i].cantidad){
+				solicitud.last_product = solicitud.productos[i]._id
+				solicitud.last_state = "waiting_quantity"
+				message = "Por favor me indicas ¿Qué cantidad de " + solicitud.productos[i].real_name + " vas a querer?"
+				return message
+			}
+		}
+
+		if(solicitud.delivery === undefined || solicitud.delivery === null){
+			solicitud.last_state = "delivery_pedido"
+			message = " ¿Quieres que hagamos entrega a domicilio?"
+		}
+		else if(!solicitud.type_payment){
+			solicitud.last_state = "type_payment"
+			message = " ¿Vas a pagar en efectivo o transferencia?"
+		}
+		else if(!solicitud.confirm_request){
+			solicitud.last_state = "confirm_request"
+			message = " Para confirmar el pedido:"
+			var total = 0
+			solicitud.productos.forEach(v => {
+				total += v.cantidad * v.price
+				message += `\n- ${v.cantidad} ${v.real_name} = ${v.currency}${v.cantidad * v.price}`
+			})
+			message += `\nEn total serían $${total}. ¿Es correcto?`
+		}
+		else if(solicitud.type_payment == 'transferencia' && !solicitud.id_payment){
+			solicitud.last_state = "waiting_id"
+			message = "Ok, nuestras cuentas son:\n" + cuentas + "\nEn cuanto hagas la transferencia, me dejas el número de operación para culminar el pedido."
+		}
+		else if(solicitud.type_payment == 'transferencia' && solicitud.id_payment && !solicitud.procesado){
+			solicitud.last_state = "waiting_confirm_delivery"
+			solicitud.procesado = true
+			message = "Ok, gracias por contactarnos, el pedido ha sido procesado, te confirmaremos la entrega."
+		}
+
+		return message
+	}
+
+
+	app.post('/agent', async function(req, res) {
+
+		console.log(req.body)
+
+		var data = await searchProduct(req.body.query)
+		var action = await getAction(req.body.query)
+
+		var sender = "Luis Garate"
+
+		var message = ""
+
+		var activa = await chatActive(sender)
+		var solicitud = await lastRequest(sender)
+
+		if(!activa)
+			message = "Hola. "
+
+
+		var cantidad = await getQuantity(req.body.query)
+		console.log(cantidad)
+		console.log(action,data, activa)
+
+
+		if(!data.length){
+			if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
+				var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
+				if(producto){
+					action = 'pedido'
+					data = [producto]
+					solicitud.last_state = null
+					solicitud.last_product = null
+				}
+			}
+
+			else if(solicitud.last_state == 'waiting_id'){
+				solicitud.id_payment = req.body.query
+				message += nextStep(solicitud)
+			}
+
+			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
+				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1){
+					message += "Genial, ¿Me indicas lo que necesitas?"
+					solicitud.last_state = "what_need"
+				}
+				else if(req.body.query.toLowerCase().split('no').length > 1){
+					if(solicitud.productos.length){
+						message += nextStep(solicitud)
+						action = null
+					}
+					else{
+						message += "Vale, gracias por contactarnos, estamos a tu orden."
+						solicitud.last_state = null
+					}
+				}
+			}
+
+			else if(solicitud.last_state == 'delivery_pedido' && !action){
+				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1){
+					message += "Ok, perfecto."
+					solicitud.delivery = true
+					if(solicitud.no_more)
+						message += nextStep(solicitud)
+					else
+						message += finalMessage(solicitud,'delivery_pedido')
+				}
+				else if(req.body.query.toLowerCase().split('no').length > 1){
+					message += "Ok."
+					if(solicitud.no_more){
+						solicitud.delivery = false
+						message += nextStep(solicitud)
+					}
+					else{
+						solicitud.delivery = false
+						message += finalMessage(solicitud,'delivery_pedido')
+					}
+				}
+			}
+
+			else if(solicitud.last_state == 'type_payment' && !action){
+				if(req.body.query.toLowerCase().split('efectivo').length > 1){
+					message += "Ok, perfecto."
+					solicitud.type_payment = 'efectivo'
+					message += nextStep(solicitud)
+				}
+				else if(req.body.query.toLowerCase().split('transferencia').length > 1){
+					message += "Ok, perfecto."
+					solicitud.type_payment = 'transferencia'
+					message += nextStep(solicitud)
+				}
+			}
+
+			else if(solicitud.last_state == 'confirm_request' && !action){
+				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1 || req.body.query.toLowerCase().split('correcto').length > 1 || req.body.query.toLowerCase().split('asi es').length > 1 || req.body.query.toLowerCase().split('claro').length > 1 || req.body.query.toLowerCase().split('perfecto').length > 1 || req.body.query.toLowerCase().split('genial').length > 1){
+					message += "Ok, perfecto."
+					solicitud.confirm_request = true
+					message += nextStep(solicitud)
+				}
+				else if(req.body.query.toLowerCase().split('no').length > 1){
+					message += "Para corregir, por favor dime el producto y la cantidad de lo que quieres."
+					solicitud.last_state = null
+				}
+			}
+
+		}
+		else{
+			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more") && !action)
+				action = "pedido"
+		}
+
+		switch(action){
+			case 'disponibilidad':
+
+				if(data.length){
+					if(data.length > 1){
+						message += "Tenemos disponible:"
+						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}`)
+						solicitud.last_state = "disponibilidad_multiple"
+					}
+					else if(data.length == 1){
+						if(data[0].score < 1)
+							message += `Puedes ser un poco más específico(a)?`
+						else{
+							message += `Si disponemos, en ${data[0].currency}${data[0].price}`
+							solicitud.last_state = 'disponibilidad_singular'
+							solicitud.last_product = data[0]._id
+						}
+					}
+				}
+				else
+					message += "No, no disponemos"
+
+				solicitud.consultas = [...solicitud.consultas, ...data]
+
+			break;
+
+			case 'delivery':
+
+				message += "Si, si hacemos entrega a domicilio. ¿Lo quieres?"
+				solicitud.last_state = 'delivery_pedido'
+				
+				// message += finalMessage(solicitud,'delivery')
+
+			break;
+
+			case 'delivery_pedido':
+
+				message += "Ok, perfecto."
+				solicitud.delivery = true
+
+				message += finalMessage(solicitud,'delivery_pedido')
+
+			break;
+
+			case 'informacion':
+
+				if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "Lo siento, lo que pides no disponemos."
+
+			break;
+
+			case 'pedido':
+
+				if(!data.length){
+					if(solicitud.last_state == 'delivery_pedido'){
+						solicitud.delivery = true
+						message += 'Ok, perfecto.'
+						solicitud.last_state = null
+					}
+					else if(solicitud.last_state == 'disponibilidad_singular' && cantidad){
+						solicitud.productos = setRequestProduct(solicitud,solicitud.consultas.filter(v => String(v._id) == String(solicitud.last_product)),cantidad)
+						message += "Ok, perfecto."
+						solicitud.last_product = null
+						solicitud.last_state = null
+					}
+					else
+						message += 'Disculpa, no tenemos.'
+
+					message += finalMessage(solicitud,'pedido')
+				}
+				else{
+					
+					if(data.length == 1){
+
+						if(data[0].score >= 1){
+
+							if(!cantidad){
+								var producto = solicitud.consultas.find(v => v._id == data[0]._id)
+								if(!producto)
+									message += `Ok, el costo es de ${data[0].currency}${data[0].price}. `
+								message += "Me indicas la cantidad?"
+								solicitud.last_state = "waiting_quantity"
+								solicitud.last_product = data[0]._id
+								solicitud.productos = setRequestProduct(solicitud,data,cantidad)
+								// return
+								// console.log()
+							}
+							else{
+								message += "Ok, perfecto."
+								solicitud.productos = setRequestProduct(solicitud,data,cantidad)
+								message += finalMessage(solicitud, 'pedido')
+							}
+
+
+						}
+						else
+							message += `No tenemos exactamente lo que quieres, ¿quizás quieres ${data[0].real_name}? Cuesta ${data[0].currency}${data[0].price}.`
+
+
+					}
+					else
+						message += "Puedes ser un poco más específico, o pedir 1 producto a la vez?"
+				}
+
+			break;
+		}
+
+		saveMessage({
+			message: req.body.query,
+			sender,
+			action,
+			data,
+			message_sended: message
+		})
+
+		saveRequest(solicitud)
+
+		
+
+		res.json({
+			message
+		})
+
+	})
+
+	var port = process.env.PORT || env.port
+
+	var server = http.listen(port, function(){
+	  console.log('listening on *:' + port);
+	});
+
+	server.timeout = 120000 * 5;
+	server.keepAliveTimeout = 60000 * 2;
+
+});
