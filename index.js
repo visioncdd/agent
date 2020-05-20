@@ -530,7 +530,7 @@ client.connect(function(err) {
 		
 
 		res.json({
-			message
+			data: [{message}]
 		})
 
 	})
