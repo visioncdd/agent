@@ -324,13 +324,15 @@ client.connect(function(err) {
 
 		var cantidad = await getQuantity(mensaje)
 		console.log(cantidad)
-		console.log(action,data, activa)
+		console.log(action,data.map(v => v.name), activa)
 
 		if(solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple" && !action && mensaje.toLowerCase()[0] == "y")
 			if(!data.length)
 				message += "Disculpa, no tengo respuesta a eso."
 			else
 				action = "disponibilidad"
+
+		console.log(action)
 
 		if(!data.length){
 			if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
