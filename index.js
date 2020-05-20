@@ -303,11 +303,12 @@ client.connect(function(err) {
 	app.post('/agent', async function(req, res) {
 
 		console.log(req.body)
+		var sender = req.body.senderName
+		var mensaje = req.body.senderMesage
 
-		var data = await searchProduct(req.body.query)
-		var action = await getAction(req.body.query)
+		var data = await searchProduct(mensaje)
+		var action = await getAction(mensaje)
 
-		var sender = "Luis Garate"
 
 		var message = ""
 
@@ -318,7 +319,7 @@ client.connect(function(err) {
 			message = "Hola. "
 
 
-		var cantidad = await getQuantity(req.body.query)
+		var cantidad = await getQuantity(mensaje)
 		console.log(cantidad)
 		console.log(action,data, activa)
 
@@ -335,16 +336,16 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'waiting_id'){
-				solicitud.id_payment = req.body.query
+				solicitud.id_payment = mensaje
 				message += nextStep(solicitud)
 			}
 
 			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
-				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1){
+				if(mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1){
 					message += "Genial, ¿Me indicas lo que necesitas?"
 					solicitud.last_state = "what_need"
 				}
-				else if(req.body.query.toLowerCase().split('no').length > 1){
+				else if(mensaje.toLowerCase().split('no').length > 1){
 					if(solicitud.productos.length){
 						message += nextStep(solicitud)
 						action = null
@@ -357,7 +358,7 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'delivery_pedido' && !action){
-				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1){
+				if(mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1){
 					message += "Ok, perfecto."
 					solicitud.delivery = true
 					if(solicitud.no_more)
@@ -365,7 +366,7 @@ client.connect(function(err) {
 					else
 						message += finalMessage(solicitud,'delivery_pedido')
 				}
-				else if(req.body.query.toLowerCase().split('no').length > 1){
+				else if(mensaje.toLowerCase().split('no').length > 1){
 					message += "Ok."
 					if(solicitud.no_more){
 						solicitud.delivery = false
@@ -379,12 +380,12 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'type_payment' && !action){
-				if(req.body.query.toLowerCase().split('efectivo').length > 1){
+				if(mensaje.toLowerCase().split('efectivo').length > 1){
 					message += "Ok, perfecto."
 					solicitud.type_payment = 'efectivo'
 					message += nextStep(solicitud)
 				}
-				else if(req.body.query.toLowerCase().split('transferencia').length > 1){
+				else if(mensaje.toLowerCase().split('transferencia').length > 1){
 					message += "Ok, perfecto."
 					solicitud.type_payment = 'transferencia'
 					message += nextStep(solicitud)
@@ -392,12 +393,12 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'confirm_request' && !action){
-				if(req.body.query.toLowerCase().split('si').length > 1 || req.body.query.toLowerCase().split('sí').length > 1 || req.body.query.toLowerCase().split('correcto').length > 1 || req.body.query.toLowerCase().split('asi es').length > 1 || req.body.query.toLowerCase().split('claro').length > 1 || req.body.query.toLowerCase().split('perfecto').length > 1 || req.body.query.toLowerCase().split('genial').length > 1){
+				if(mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1){
 					message += "Ok, perfecto."
 					solicitud.confirm_request = true
 					message += nextStep(solicitud)
 				}
-				else if(req.body.query.toLowerCase().split('no').length > 1){
+				else if(mensaje.toLowerCase().split('no').length > 1){
 					message += "Para corregir, por favor dime el producto y la cantidad de lo que quieres."
 					solicitud.last_state = null
 				}
@@ -517,7 +518,7 @@ client.connect(function(err) {
 		}
 
 		saveMessage({
-			message: req.body.query,
+			message: mensaje,
 			sender,
 			action,
 			data,
