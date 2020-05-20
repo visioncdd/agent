@@ -328,7 +328,7 @@ client.connect(function(err) {
 
 		if(solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple" && !action && mensaje.toLowerCase()[0] == "y")
 			if(!data.length)
-				action = "Disculpa, no tengo respuesta a eso."
+				message += "Disculpa, no tengo respuesta a eso."
 			else
 				action = "disponibilidad"
 
