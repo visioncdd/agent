@@ -173,7 +173,10 @@ client.connect(function(err) {
 		return new Promise(resolve => {
 
 			db1.collection('solicitudes').findOne({
-				sender
+				sender,
+				procesado: {
+					$exists: false
+				}
 			}, {
 				sort: {
 					createdAt: -1
