@@ -28,7 +28,7 @@ client.connect(function(err) {
 
   console.log("Connected successfully to server");
 
-  const db1 = client.db('agente');
+  const db1 = client.db(env.db);
 
   db1.collection('productos').createIndex({name: "text"})
   // db1.collection('productos').createIndex({preffix: "text"})
