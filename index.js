@@ -14,26 +14,26 @@ var mkdirp = require('mkdirp');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require('mongodb').ObjectId;
 
-var env = require('./env')
+// var env = require('./env')
 
 http.timeout = 120000 * 5;
 http.keepAliveTimeout = 60000 * 2;
 
-const client = new MongoClient(env.mongodbUrl);
+// const client = new MongoClient(env.mongodbUrl);
 
-// Use connect method to connect to the Server
-client.connect(function(err) {
+// // Use connect method to connect to the Server
+// client.connect(function(err) {
 
-	console.log(err)
+// 	console.log(err)
 
-  console.log("Connected successfully to server");
+//   console.log("Connected successfully to server");
 
-  const db1 = client.db('agente');
+//   const db1 = client.db('agente');
 
-  db1.collection('productos').createIndex({name: "text"})
-  // db1.collection('productos').createIndex({preffix: "text"})
-  db1.collection('acciones').createIndex({term: "text"})
-  db1.collection('cantidades').createIndex({numero: "text",letra: "text"})
+//   db1.collection('productos').createIndex({name: "text"})
+//   // db1.collection('productos').createIndex({preffix: "text"})
+//   db1.collection('acciones').createIndex({term: "text"})
+//   db1.collection('cantidades').createIndex({numero: "text",letra: "text"})
 
 
 	app.use(bodyParser.json()); 
@@ -303,6 +303,7 @@ client.connect(function(err) {
 	app.post('/agent', async function(req, res) {
 
 		console.log(req.body)
+		return res.json({})
 
 		var data = await searchProduct(req.body.query)
 		var action = await getAction(req.body.query)
@@ -534,7 +535,8 @@ client.connect(function(err) {
 
 	})
 
-	var port = process.env.PORT || env.port
+	// var port = process.env.PORT || env.port
+	var port = 3000
 
 	var server = http.listen(port, function(){
 	  console.log('listening on *:' + port);
@@ -543,4 +545,4 @@ client.connect(function(err) {
 	server.timeout = 120000 * 5;
 	server.keepAliveTimeout = 60000 * 2;
 
-});
+// });
