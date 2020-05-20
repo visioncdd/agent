@@ -326,7 +326,7 @@ client.connect(function(err) {
 		console.log(cantidad)
 		console.log(action,data.map(v => v.name), activa)
 
-		if(solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple" && !action && mensaje.toLowerCase()[0] == "y")
+		if((solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple") && !action && mensaje.toLowerCase()[0] == "y")
 			if(!data.length)
 				message += "Disculpa, no tengo respuesta a eso."
 			else
