@@ -326,6 +326,11 @@ client.connect(function(err) {
 		console.log(cantidad)
 		console.log(action,data, activa)
 
+		if(solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple" && !action && mensaje.toLowerCase()[0] == "y")
+			if(!data.length)
+				action = "Disculpa, no tengo respuesta a eso."
+			else
+				action = "disponibilidad"
 
 		if(!data.length){
 			if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
@@ -412,6 +417,8 @@ client.connect(function(err) {
 			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more") && !action)
 				action = "pedido"
 		}
+
+		solicitud.last_action = action
 
 		switch(action){
 			case 'disponibilidad':
