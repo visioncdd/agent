@@ -403,7 +403,7 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'confirm_request' && !action){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 7){
+				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 15){
 					// message += "Ok, perfecto."
 					solicitud.confirm_request = true
 					message += nextStep(solicitud)
