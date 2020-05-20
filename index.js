@@ -496,7 +496,7 @@ client.connect(function(err) {
 					
 					if(data.length == 1){
 
-						if(data[0].score >= 1 || solicitud.consultas.find(v => String(v._id) == String(data[0].score))){
+						if(data[0].score >= 1 || solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
 
 							if(!cantidad){
 								var producto = solicitud.consultas.find(v => v._id == data[0]._id)
