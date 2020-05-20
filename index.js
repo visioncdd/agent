@@ -295,6 +295,11 @@ client.connect(function(err) {
 			solicitud.procesado = true
 			message = "Ok, gracias por contactarnos, el pedido ha sido procesado, te confirmaremos la entrega."
 		}
+		else if(solicitud.type_payment == 'efectivo' && !solicitud.procesado){
+			solicitud.last_state = "waiting_confirm_delivery"
+			solicitud.procesado = true
+			message = "Ok, gracias por contactarnos, el pedido ha sido procesado, te confirmaremos la entrega."
+		}
 
 		return message
 	}
