@@ -332,7 +332,7 @@ client.connect(function(err) {
 			else
 				action = "disponibilidad"
 
-		console.log(action)
+		// console.log(action)
 
 		if(!data.length){
 			if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
@@ -496,7 +496,7 @@ client.connect(function(err) {
 					
 					if(data.length == 1){
 
-						if(data[0].score >= 1){
+						if(data[0].score >= 1 || solicitud.consultas.find(v => String(v._id) == String(data[0].score))){
 
 							if(!cantidad){
 								var producto = solicitud.consultas.find(v => v._id == data[0]._id)
