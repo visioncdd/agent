@@ -302,6 +302,17 @@ client.connect(function(err) {
 		return message
 	}
 
+	function hasPayId(mensaje){
+		var id = false
+
+		mensaje.split(' ').forEach(v => {
+			if(Number(v))
+				id = Number(v)
+		})
+
+		return id
+	}
+
 
 	app.post('/agent', async function(req, res) {
 
@@ -345,8 +356,8 @@ client.connect(function(err) {
 				}
 			}
 
-			else if(solicitud.last_state == 'waiting_id'){
-				solicitud.id_payment = mensaje
+			else if(solicitud.last_state == 'waiting_id' && hasPayId(mensaje)){
+				solicitud.id_payment = hasPayId(mensaje)
 				message += nextStep(solicitud)
 			}
 
@@ -420,7 +431,8 @@ client.connect(function(err) {
 				action = "pedido"
 		}
 
-		solicitud.last_action = action
+		if(action)
+			solicitud.last_action = action
 
 		switch(action){
 			case 'disponibilidad':
@@ -543,7 +555,7 @@ client.connect(function(err) {
 
 		if(!activa)
 			mensajes.push({
-				message: "Hola, soy Alex, el *asistente virtual* de La Ciudad de las Frutas. Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme pedidos y notificarme pagos de los mismos.\n\nQuiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, gracias!"
+				message: "Hola, soy Alex, el *asistente virtual* de La Ciudad de las Frutas. Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos.\n\nQuiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, gracias!"
 			})
 
 		mensajes.push({message})
