@@ -122,6 +122,7 @@ client.connect(function(err) {
 			}], function(err, data){
 				
 				data.limit(1).toArray(function(err,list){
+					console.log(list)
 					resolve(list.length && list[0].score >= 1 ? list[0].action : null)
 				})
 			})
