@@ -492,6 +492,13 @@ client.connect(function(err) {
 
 			break;
 
+			case 'banks':
+
+				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "Por ahora solo Banesco"
+
+			break;
+
 			case 'pedido':
 
 				if(!data.length){
