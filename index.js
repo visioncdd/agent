@@ -362,7 +362,7 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1) && mensaje.split('').length < 15){
+				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 15){
 					message += "Genial, ¿Me indicas lo que necesitas?"
 					solicitud.last_state = "what_need"
 				}
@@ -379,7 +379,7 @@ client.connect(function(err) {
 			}
 
 			else if(solicitud.last_state == 'delivery_pedido' && !action){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1) && mensaje.split('').length < 15){
+				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 15){
 					message += "Ok, perfecto."
 					solicitud.delivery = true
 					if(solicitud.no_more)
