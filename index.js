@@ -318,8 +318,8 @@ client.connect(function(err) {
 		var activa = await chatActive(sender)
 		var solicitud = await lastRequest(sender)
 
-		if(!activa)
-			message = "Hola. "
+		// if(!activa)
+			// message = "Hola. "
 
 
 		var cantidad = await getQuantity(mensaje)
@@ -539,10 +539,17 @@ client.connect(function(err) {
 
 		saveRequest(solicitud)
 
-		
+		var mensajes = []
+
+		if(!activa)
+			mensajes.push({
+				message: "Hola, soy Alex, el *asistente virtual* de La Ciudad de las Frutas. Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme pedidos y notificarme pagos de los mismos.\n\nQuiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, gracias!"
+			})
+
+		mensajes.push({message})
 
 		res.json({
-			data: [{message}]
+			data: mensajes
 		})
 
 	})
