@@ -485,6 +485,13 @@ client.connect(function(err) {
 
 			break;
 
+			case 'question_type_payment':
+
+				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "En efectivo o transferencia"
+
+			break;
+
 			case 'pedido':
 
 				if(!data.length){
