@@ -115,6 +115,8 @@ client.connect(function(err) {
 			},{
 				$project: {
 					action: 1,
+					term: 1,
+					_id: 1,
 					score: {
 						$meta: "textScore"
 					}
