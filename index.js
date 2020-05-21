@@ -112,10 +112,17 @@ client.connect(function(err) {
 						$meta: "textScore"
 					}
 				}
+			},{
+				$project: {
+					action: 1,
+					score: {
+						$meta: "textScore"
+					}
+				}
 			}], function(err, data){
 				
 				data.limit(1).toArray(function(err,list){
-					resolve(list.length ? list[0].action : null)
+					resolve(list.length && list[0].score >= 1 ? list[0].action : null)
 				})
 			})
 
