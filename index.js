@@ -593,10 +593,17 @@ client.connect(function(err) {
 
 		var mensajes = []
 
-		if(!activa)
+		if(!activa){
 			mensajes.push({
-				message: "Hola, soy Alex, el *asistente virtual* de *Lo Verdaderamente Natural*. Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos.\n\nQuiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
+				message: "Hola, soy Alex, el *asistente virtual* de *Lo Verdaderamente Natural*. "
 			})
+			mensajes.push({
+				message: "Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos."
+			})
+			mensajes.push({
+				message: "Quiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
+			})
+		}
 
 		mensajes.push({message})
 
