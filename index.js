@@ -336,6 +336,8 @@ client.connect(function(err) {
 		var activa = await chatActive(sender)
 		var solicitud = await lastRequest(sender)
 
+		var cities = "valencia."
+
 		// if(!activa)
 			// message = "Hola. "
 
@@ -510,6 +512,13 @@ client.connect(function(err) {
 
 				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
 					message += "Por el momento no."
+
+			break;
+
+			case 'delivery_city':
+
+				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "Hacemos envíos en toda " + cities
 
 			break;
 
