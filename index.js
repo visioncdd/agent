@@ -472,7 +472,7 @@ client.connect(function(err) {
 
 			case 'delivery':
 
-				message += "Si, si hacemos entrega a domicilio. ¿Lo quieres?"
+				message += "Si, si hacemos entrega a domicilio en toda " + cities + ". ¿Lo quieres?"
 				solicitud.last_state = 'delivery_pedido'
 				
 				// message += finalMessage(solicitud,'delivery')
