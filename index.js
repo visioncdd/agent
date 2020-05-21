@@ -506,6 +506,13 @@ client.connect(function(err) {
 
 			break;
 
+			case 'question_major':
+
+				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "Por el momento no."
+
+			break;
+
 			case 'pedido':
 
 				if(!data.length){
