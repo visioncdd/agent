@@ -501,6 +501,9 @@ client.connect(function(err) {
 			}
 		}
 
+		if(!action && data.length)
+			action = "disponibilidad"
+
 		if(action)
 			solicitud.last_action = action
 
