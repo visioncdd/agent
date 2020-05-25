@@ -449,6 +449,11 @@ client.connect(function(err) {
 				}
 			}
 
+			else if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
+				action = "pedido"
+				solicitud.last_state = "disponibilidad_singular"
+			}
+
 			else if(solicitud.last_state == 'confirm_request' && !action){
 				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
 					// message += "Ok, perfecto."
@@ -465,8 +470,11 @@ client.connect(function(err) {
 		else{
 			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more" || (cantidad && data.length == 1 && solicitud.consultas.find(v => v._id == data[0]._id))) && !action)
 				action = "pedido"
-			else if(cantidad && !action && data.length == 1 && !solicitud.consultas.find(v => v._id == data[0]._id))
+			else if(cantidad && !action && data.length == 1 && !solicitud.consultas.find(v => v._id == data[0]._id)){
 				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
+				solicitud.last_state = "decir_precio"
+				solicitud.last_product = data[0]._id
+			}
 		}
 
 		if(action)
