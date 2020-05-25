@@ -642,6 +642,7 @@ client.connect(function(err) {
 					else{
 						message += "Tenemos disponible:"
 						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}`)
+						solicitud.consultas = [...solicitud.consultas,...data]
 						solicitud.last_state = "disponibilidad_multiple"
 						// message += "Puedes ser un poco más específico, o pedir 1 producto a la vez?"
 					}
