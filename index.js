@@ -376,7 +376,14 @@ client.connect(function(err) {
 		// console.log(action)
 
 		if(!data.length){
-			if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
+
+			if(action == 'lista_productos'){
+				action = 'disponibilidad'
+				data = await all_items()
+				console.log(action,data)
+			}
+
+			else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
 				var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
 				if(producto){
 					action = 'pedido'
@@ -389,11 +396,6 @@ client.connect(function(err) {
 			else if(solicitud.last_state == 'waiting_id' && hasPayId(mensaje)){
 				solicitud.id_payment = hasPayId(mensaje)
 				message += nextStep(solicitud)
-			}
-
-			else if(action == 'lista_productos'){
-				action = 'disponibilidad'
-				data = await all_items()
 			}
 
 			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
