@@ -402,7 +402,7 @@ client.connect(function(err) {
 					message += "Genial, ¿Me indicas lo que necesitas?"
 					solicitud.last_state = "what_need"
 				}
-				else if(mensaje.toLowerCase().split('no').length > 1 && mensaje.split('').length < 25){
+				else if((mensaje.toLowerCase().split('no').length > 1 || mensaje.toLowerCase().split('solo eso').length > 1 || mensaje.toLowerCase().split('nada mas').length > 1) && mensaje.split('').length < 25){
 					if(solicitud.productos.length){
 						message += nextStep(solicitud)
 						action = null
