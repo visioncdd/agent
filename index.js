@@ -179,6 +179,24 @@ client.connect(function(err) {
 		})
 	}
 
+	function all_items(){
+		return new Promise(resolve => {
+
+			db1.collection('productos').find({
+				quantity: {
+					$gt: 0
+				}
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, productos) => {
+				resolve(productos)
+			})
+
+		})
+	}
+
 	function lastRequest(sender){
 		return new Promise(resolve => {
 
@@ -371,6 +389,11 @@ client.connect(function(err) {
 			else if(solicitud.last_state == 'waiting_id' && hasPayId(mensaje)){
 				solicitud.id_payment = hasPayId(mensaje)
 				message += nextStep(solicitud)
+			}
+
+			else if(action == 'lista_productos'){
+				action = 'disponibilidad'
+				data = await all_items()
 			}
 
 			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
