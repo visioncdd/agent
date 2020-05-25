@@ -525,6 +525,13 @@ client.connect(function(err) {
 
 			break;
 
+			case 'buenas':
+
+				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+					message += "Buenas..."
+
+			break;
+
 			case 'pedido':
 
 				if(!data.length){
@@ -597,12 +604,12 @@ client.connect(function(err) {
 			mensajes.push({
 				message: "Hola, soy Alex, el *asistente virtual* de *Lo Verdaderamente Natural*. "
 			})
-			mensajes.push({
-				message: "Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos."
-			})
-			mensajes.push({
-				message: "Quiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
-			})
+			// mensajes.push({
+			// 	message: "Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos."
+			// })
+			// mensajes.push({
+			// 	message: "Quiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
+			// })
 		}
 
 		mensajes.push({message})
