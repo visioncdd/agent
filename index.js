@@ -470,7 +470,7 @@ client.connect(function(err) {
 		else{
 			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more" || (cantidad && data.length == 1 && solicitud.consultas.find(v => v._id == data[0]._id))) && !action)
 				action = "pedido"
-			else if(cantidad && !action && data.length == 1 && !solicitud.consultas.find(v => v._id == data[0]._id)){
+			else if(cantidad && (!action || action == "pedido") && data.length == 1 && !solicitud.consultas.find(v => v._id == data[0]._id)){
 				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
 				solicitud.last_state = "decir_precio"
 				solicitud.last_product = data[0]._id
