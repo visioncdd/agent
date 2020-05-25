@@ -402,7 +402,10 @@ client.connect(function(err) {
 			}
 
 			else if(action == "no_more")
-				message += nextStep(solicitud)
+				if(solicitud.productos.length)
+					message += nextStep(solicitud)
+				else
+					message += "¿Te puedo ayudar en algo mas?"
 
 			else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
 				var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
