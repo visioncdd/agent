@@ -380,7 +380,6 @@ client.connect(function(err) {
 			if(action == 'lista_productos'){
 				action = 'disponibilidad'
 				data = await all_items()
-				console.log(action,data)
 			}
 
 			else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
@@ -464,8 +463,10 @@ client.connect(function(err) {
 
 		}
 		else{
-			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more") && !action)
+			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more" || (cantidad && data.length == 1 && solicitud.consultas.find(v => v._id == data[0]._id))) && !action)
 				action = "pedido"
+			else if(cantidad && !action && data.length == 1 && !solicitud.consultas.find(v => v._id == data[0]._id))
+				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
 		}
 
 		if(action)
