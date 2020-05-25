@@ -572,7 +572,7 @@ client.connect(function(err) {
 			case 'question_major':
 
 				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Por el momento no."
+					message += "Por el momento no vendemos al mayor."
 
 			break;
 
