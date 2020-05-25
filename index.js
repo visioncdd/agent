@@ -231,7 +231,10 @@ client.connect(function(err) {
 					createdAt: -1
 				}
 			}, (err, data) => {
-				resolve(data)
+				resolve({
+					...data,
+					score: 1
+				})
 			})
 
 		})
