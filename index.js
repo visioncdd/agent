@@ -191,7 +191,7 @@ client.connect(function(err) {
 					createdAt: -1
 				}
 			}, (err, productos) => {
-				resolve(productos)
+				resolve(productos.toArray())
 			})
 
 		})
