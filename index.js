@@ -501,7 +501,7 @@ client.connect(function(err) {
 			}
 		}
 
-		if(!action && data.length)
+		if(!action && data.length && !message)
 			action = "disponibilidad"
 
 		if(action)
