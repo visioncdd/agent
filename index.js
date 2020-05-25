@@ -449,7 +449,7 @@ client.connect(function(err) {
 				}
 			}
 
-			else if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
+			else if((mensaje.toLowerCase().split('ok').length > 1 || mensaje.toLowerCase().split('vale').length > 1 || mensaje.toLowerCase().split('esta bien').length > 1 || mensaje.toLowerCase().split('está bien').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
 				action = "pedido"
 				solicitud.last_state = "disponibilidad_singular"
 			}
