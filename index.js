@@ -221,6 +221,22 @@ client.connect(function(err) {
 		})
 	}
 
+	function getProduct(_id){
+		return new Promise(resolve => {
+
+			db1.collection('productos').findOne({
+				_id,
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, data) => {
+				resolve(data)
+			})
+
+		})
+	}
+
 	function saveMessage(message){
 		return new Promise(resolve => {
 
@@ -451,7 +467,9 @@ client.connect(function(err) {
 
 			else if((mensaje.toLowerCase().split('ok').length > 1 || mensaje.toLowerCase().split('vale').length > 1 || mensaje.toLowerCase().split('esta bien').length > 1 || mensaje.toLowerCase().split('está bien').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
 				action = "pedido"
-				solicitud.last_state = "disponibilidad_singular"
+				solicitud.last_state = "decir_precio"
+				data = await getProduct(solicitud.last_product)
+				data = [data]
 				cantidad = solicitud.last_cantidad
 			}
 
