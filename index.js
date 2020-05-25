@@ -452,6 +452,7 @@ client.connect(function(err) {
 			else if((mensaje.toLowerCase().split('ok').length > 1 || mensaje.toLowerCase().split('vale').length > 1 || mensaje.toLowerCase().split('esta bien').length > 1 || mensaje.toLowerCase().split('está bien').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
 				action = "pedido"
 				solicitud.last_state = "disponibilidad_singular"
+				cantidad = solicitud.last_cantidad
 			}
 
 			else if(solicitud.last_state == 'confirm_request' && !action){
@@ -475,6 +476,7 @@ client.connect(function(err) {
 				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
 				solicitud.last_state = "decir_precio"
 				solicitud.last_product = data[0]._id
+				solicitud.last_cantidad = cantidad
 			}
 		}
 
