@@ -401,6 +401,9 @@ client.connect(function(err) {
 				data = await all_items()
 			}
 
+			else if(action == "no_more")
+				message += nextStep(solicitud)
+
 			else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
 				var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
 				if(producto){
@@ -499,6 +502,8 @@ client.connect(function(err) {
 				solicitud.last_product = data[0]._id
 				solicitud.last_cantidad = cantidad
 			}
+			else if(action == "no_more")
+				action = "pedido"
 		}
 
 		if(!action && data.length && !message)
