@@ -502,6 +502,8 @@ client.connect(function(err) {
 			else if(cantidad && (!action || action == "pedido") && data.length == 1 && !solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
 				action = null
 				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
+				if(data[0].description)
+					message += `\n${data[0].description}`
 				solicitud.last_state = "decir_precio"
 				solicitud.last_product = data[0]._id
 				solicitud.last_cantidad = cantidad
@@ -522,14 +524,16 @@ client.connect(function(err) {
 				if(data.length){
 					if(data.length > 1){
 						message += "Tenemos disponible:"
-						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}`)
+						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ''))
 						solicitud.last_state = "disponibilidad_multiple"
 					}
 					else if(data.length == 1){
 						if(data[0].score < 1)
 							message += `Puedes ser un poco más específico(a)?`
 						else{
-							message += `Si disponemos, en ${data[0].currency}${data[0].price}`
+							message += `Si disponemos de ${data[0].real_name}, en ${data[0].currency}${data[0].price}`
+							if(data[0].description)
+								message += `\n${data[0].description}`
 							solicitud.last_state = 'disponibilidad_singular'
 							solicitud.last_product = data[0]._id
 						}
@@ -629,8 +633,11 @@ client.connect(function(err) {
 
 							if(!cantidad){
 								var producto = solicitud.consultas.find(v => v._id == data[0]._id)
-								if(!producto)
+								if(!producto){
 									message += `Ok, el costo es de ${data[0].currency}${data[0].price}. `
+									if(data[0].description)
+										message += `\n${data[0].description}\n`
+								}
 								message += "Me indicas la cantidad?"
 								solicitud.last_state = "waiting_quantity"
 								solicitud.last_product = data[0]._id
@@ -646,14 +653,17 @@ client.connect(function(err) {
 
 
 						}
-						else
+						else{
 							message += `No tenemos exactamente lo que quieres, ¿quizás quieres ${data[0].real_name}? Cuesta ${data[0].currency}${data[0].price}.`
+							if(data[0].description)
+								message += `\n${data[0].description}`
+						}
 
 
 					}
 					else{
 						message += "Tenemos disponible:"
-						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}`)
+						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ""))
 						solicitud.consultas = [...solicitud.consultas,...data]
 						solicitud.last_state = "disponibilidad_multiple"
 						// message += "Puedes ser un poco más específico, o pedir 1 producto a la vez?"
