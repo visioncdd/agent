@@ -362,7 +362,7 @@ client.connect(function(err) {
 	}
 
 
-	app.post('/agent', async function(req, res) {
+	app.post('/', async function(req, res) {
 
 		console.log(req.body)
 		var sender = req.body.senderName
