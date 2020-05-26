@@ -539,7 +539,7 @@ client.connect(function(err) {
 				solicitud.last_product = data[0]._id
 				solicitud.last_cantidad = cantidad
 			}
-			else if(action == "no_more")
+			else if(action == "no_more" || (cantidad && (!action || action == "pedido") && data.length == 1 && solicitud.consultas.find(v => String(v._id) == String(data[0]._id))))
 				action = "pedido"
 		}
 
