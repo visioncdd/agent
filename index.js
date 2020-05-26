@@ -226,7 +226,7 @@ client.connect(function(err) {
 		return new Promise(resolve => {
 
 			db1.collection('productos').findOne({
-				_id,
+				_id: ObjectId(_id),
 			}, {
 				sort: {
 					createdAt: -1
@@ -241,14 +241,14 @@ client.connect(function(err) {
 		})
 	}
 
-	function getCompany(empresa){
+	function getCompany(_id){
 		return new Promise(resolve => {
 
-			db1.collection('empresas').find({
-				_id: empresa,
+			db1.collection('empresas').findOne({
+				_id: ObjectId(_id),
 			}, {}, (err, data) => {
-				data.toArray().then(res => console.log(res))
-				resolve(null)
+				// data.toArray().then(res => console.log(res))
+				resolve(data)
 			})
 
 		})
