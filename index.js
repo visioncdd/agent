@@ -353,7 +353,7 @@ client.connect(function(err) {
 				}
 			}
 
-			if(solicitud.delivery === undefined || solicitud.delivery === null){
+			if((solicitud.delivery === undefined || solicitud.delivery === null) && empresa.delivery){
 				solicitud.last_state = "delivery_pedido"
 				message = " ¿Quieres que hagamos entrega a domicilio?"
 			}
