@@ -627,7 +627,7 @@ client.connect(function(err) {
 				if(empresa.banks.length == 1)				
 					message += "Por ahora solo " + empresa.banks[0].name
 				else
-					message += `Trabajamos con ${empresa.banks.map(v => v.name).join(', ')}`
+					message += `Trabajamos con ${empresa.banks.map(v => v.name).join(empresa.banks.length == 2 ? ' y ' : ', ')}`
 
 			break;
 
