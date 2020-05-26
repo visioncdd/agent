@@ -355,7 +355,7 @@ client.connect(function(err) {
 
 			if((solicitud.delivery === undefined || solicitud.delivery === null) && empresa.delivery){
 				solicitud.last_state = "delivery_pedido"
-				message = " ¿Quieres que hagamos entrega a domicilio?"
+				message = " ¿Quieres que hagamos entrega a domicilio? " + (empresa.delivery_cost ? `Cuesta ${empresa.delivery_currency}${empresa.delivery_cost}` : 'No tiene costo')
 			}
 			else if(!solicitud.type_payment){
 				solicitud.last_state = "type_payment"
@@ -580,7 +580,7 @@ client.connect(function(err) {
 			case 'delivery':
 
 				if(empresa.delivery){
-					message += "Si, si hacemos entrega a domicilio en toda " + cities + ". ¿Lo quieres?"
+					message += "Si, si hacemos entrega a domicilio en toda " + cities + ". " + (empresa.delivery_cost ? `Cuesta ${empresa.delivery_currency}${empresa.delivery_cost}` : 'No tiene costo') + "\n¿Lo quieres?"
 					solicitud.last_state = 'delivery_pedido'
 				}
 				else
