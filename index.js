@@ -46,7 +46,7 @@ client.connect(function(err) {
 			db1.collection('empresas').findOne({
 				_id: ObjectId(_id),
 			}, {}, (err, data) => {
-				// data.toArray().then(res => console.log(res))
+				console.log(err,data)
 				resolve(data)
 			})
 
