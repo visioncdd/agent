@@ -40,6 +40,11 @@ client.connect(function(err) {
 	app.use(bodyParser.urlencoded({ extended: true }));
 	app.use(cors())
 
+	app.get('/empresa/:id', async function(req, res) {
+		console.log(req)
+		return res.json({})
+	})
+
 	app.post('/', async function(req, res) {
 
 		console.log(req.body)
@@ -714,15 +719,18 @@ client.connect(function(err) {
 			break;
 		}
 
+		solicitud = await saveRequest(solicitud)
+
 		saveMessage({
 			message: mensaje,
 			sender,
 			action,
 			data,
-			message_sended: message
+			message_sended: message,
+			request: solicitud._id
 		})
 
-		saveRequest(solicitud)
+		
 
 		var mensajes = []
 
