@@ -43,12 +43,18 @@ client.connect(function(err) {
 	function getCompany(_id){
 		return new Promise(resolve => {
 
-			db1.collection('empresas').findOne({
-				_id: ObjectId(_id),
-			}, {}, (err, data) => {
-				console.log(err,data)
-				resolve(data)
-			})
+			try{
+				var id = ObjectId(_id)
+				db1.collection('empresas').findOne({
+					_id: id,
+				}, {}, (err, data) => {
+					console.log(err,data)
+					resolve(data)
+				})
+			}
+			catch(error){
+				resolve(null)
+			}
 
 		})
 	}
