@@ -373,7 +373,7 @@ client.connect(function(err) {
 			}
 			else if(solicitud.type_payment == 'transferencia' && !solicitud.id_payment){
 				solicitud.last_state = "waiting_id"
-				message = "Ok, nuestras cuentas son:" + empresa.banks.map(v => `\n${v.name}\n${v.number}\n${v.type}\n${v.titular_name}\n${v.identity_card}\n`) + "\nEn cuanto hagas la transferencia, me dejas el número de operación y a cuál banco lo hiciste para culminar el pedido."
+				message = "Ok, nuestras cuentas son:\n" + empresa.banks.map(v => `\n${v.name}\n${v.number}\n${v.type}\n${v.titular_name}\n${v.identity_card}\n`).join('') + "\nEn cuanto hagas la transferencia, me dejas el número de operación y a cuál banco lo hiciste para culminar el pedido."
 			}
 			else if((solicitud.type_payment == 'transferencia' && solicitud.id_payment && !solicitud.procesado) || solicitud.type_payment == "efectivo"){
 				solicitud.last_state = "waiting_confirm_delivery"
