@@ -244,13 +244,12 @@ client.connect(function(err) {
 	function getCompany(_id){
 		return new Promise(resolve => {
 
+			console.log(_id)
+
 			db1.collection('empresas').findOne({
 				_id,
-			}, {
-				sort: {
-					createdAt: -1
-				}
-			}, (err, data) => {
+			}, {}, (err, data) => {
+				console.log(err,data)
 				resolve(data)
 			})
 
