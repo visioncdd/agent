@@ -388,6 +388,7 @@ client.connect(function(err) {
 			})
 
 		var empresa = await getCompany(req.headers.empresa)
+		console.log(empresa)
 
 		if(!empresa)
 			return res.json({
