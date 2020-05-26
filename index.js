@@ -584,8 +584,12 @@ client.connect(function(err) {
 
 			case 'delivery':
 
-				message += "Si, si hacemos entrega a domicilio en toda " + cities + ". ¿Lo quieres?"
-				solicitud.last_state = 'delivery_pedido'
+				if(empresa.delivery){
+					message += "Si, si hacemos entrega a domicilio en toda " + cities + ". ¿Lo quieres?"
+					solicitud.last_state = 'delivery_pedido'
+				}
+				else
+					message += "No hacemos entrega a domicilio"
 				
 				// message += finalMessage(solicitud,'delivery')
 
@@ -593,10 +597,14 @@ client.connect(function(err) {
 
 			case 'delivery_pedido':
 
-				message += "Ok, perfecto."
-				solicitud.delivery = true
+				if(empresa.delivery){
+					message += "Ok, perfecto."
+					solicitud.delivery = true
 
-				message += finalMessage(solicitud,'delivery_pedido')
+					message += finalMessage(solicitud,'delivery_pedido')
+				}
+				else
+					message += "No hacemos entrega a domicilio"
 
 			break;
 
@@ -616,8 +624,10 @@ client.connect(function(err) {
 
 			case 'banks':
 
-				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Por ahora solo Banesco"
+				if(empresa.banks.length == 1)				
+					message += "Por ahora solo " + empresa.banks[0].name
+				else
+					message += `Trabajamos con ${empresa.banks.map(v => v.name).join(', ')}`
 
 			break;
 
