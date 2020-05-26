@@ -399,6 +399,7 @@ client.connect(function(err) {
 			if(action == 'lista_productos'){
 				action = 'disponibilidad'
 				data = await all_items()
+				solicitud.consultas = [...solicitud.consultas, ...data]
 			}
 
 			else if(action == "no_more")
