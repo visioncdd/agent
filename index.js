@@ -241,6 +241,22 @@ client.connect(function(err) {
 		})
 	}
 
+	function getCompany(_id){
+		return new Promise(resolve => {
+
+			db1.collection('empresas').findOne({
+				_id,
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, data) => {
+				resolve(data)
+			})
+
+		})
+	}
+
 	function saveMessage(message){
 		return new Promise(resolve => {
 
@@ -365,6 +381,19 @@ client.connect(function(err) {
 	app.post('/', async function(req, res) {
 
 		console.log(req.body,req.headers)
+
+		if(!req.headers.empresa)
+			return res.json({
+				data: []
+			})
+
+		var empresa = await getCompany(req.headers.empresa)
+
+		if(!empresa)
+			return res.json({
+				data: []
+			})
+
 		var sender = req.body.senderName
 		var mensaje = req.body.senderMesage
 
@@ -377,7 +406,7 @@ client.connect(function(err) {
 		var activa = await chatActive(sender)
 		var solicitud = await lastRequest(sender)
 
-		var cities = "valencia."
+		var cities = empresa.cities
 
 		// if(!activa)
 			// message = "Hola. "
@@ -688,7 +717,7 @@ client.connect(function(err) {
 
 		if(!activa){
 			mensajes.push({
-				message: "Hola, soy Alex, el *asistente virtual* de *Lo Verdaderamente Natural*. "
+				message: `Hola, soy *${empresa.agent_name}*, el *asistente virtual* de *${empresa.name}*. `
 			})
 			// mensajes.push({
 			// 	message: "Fui creado para facilitar la comunicación entre tú y la empresa, puedo ayudarte respondiendo sobre *disponibilidad* de productos y servicios, puedes hacerme *pedidos* y notificarme *pagos* de los mismos."
