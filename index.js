@@ -247,7 +247,7 @@ client.connect(function(err) {
 			db1.collection('empresas').find({
 				_id,
 			}, {}, (err, data) => {
-				console.log(data.toArray())
+				data.toArray().then(res => console.log(res))
 				resolve(null)
 			})
 
