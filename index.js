@@ -41,7 +41,7 @@ client.connect(function(err) {
 	app.use(cors())
 
 	app.get('/empresa/:id', async function(req, res) {
-		console.log(req)
+		console.log(req.body,req.params)
 		return res.json({})
 	})
 
