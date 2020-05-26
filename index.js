@@ -40,9 +40,24 @@ client.connect(function(err) {
 	app.use(bodyParser.urlencoded({ extended: true }));
 	app.use(cors())
 
+	function getCompany(_id){
+		return new Promise(resolve => {
+
+			db1.collection('empresas').findOne({
+				_id: ObjectId(_id),
+			}, {}, (err, data) => {
+				// data.toArray().then(res => console.log(res))
+				resolve(data)
+			})
+
+		})
+	}
+
 	app.get('/empresa/:id', async function(req, res) {
-		console.log(req.body,req.params)
-		return res.json({})
+
+		var empresa = await getCompany(req.params.id)
+		// console.log(req.body,req.params)
+		return res.json(empresa)
 	})
 
 	app.post('/', async function(req, res) {
@@ -265,18 +280,7 @@ client.connect(function(err) {
 			})
 		}
 
-		function getCompany(_id){
-			return new Promise(resolve => {
-
-				db1.collection('empresas').findOne({
-					_id: ObjectId(_id),
-				}, {}, (err, data) => {
-					// data.toArray().then(res => console.log(res))
-					resolve(data)
-				})
-
-			})
-		}
+		
 
 		function saveMessage(message){
 			return new Promise(resolve => {
