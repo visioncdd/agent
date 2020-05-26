@@ -364,7 +364,7 @@ client.connect(function(err) {
 
 	app.post('/', async function(req, res) {
 
-		console.log(req.body)
+		console.log(req.body,req.headers)
 		var sender = req.body.senderName
 		var mensaje = req.body.senderMesage
 
