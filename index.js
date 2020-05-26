@@ -40,11 +40,21 @@ client.connect(function(err) {
 	app.use(bodyParser.urlencoded({ extended: true }));
 	app.use(cors())
 
-	var cuentas = 'Banesco 0134'
-
-
-
 	app.post('/', async function(req, res) {
+
+		console.log(req.body)
+
+		if(!req.headers.empresa)
+			return res.json({
+				data: []
+			})
+
+		var empresa = await getCompany(req.headers.empresa)
+
+		if(!empresa)
+			return res.json({
+				data: []
+			})
 		
 		function searchProduct(text){
 			return new Promise(resolve => {
@@ -363,7 +373,7 @@ client.connect(function(err) {
 			}
 			else if(solicitud.type_payment == 'transferencia' && !solicitud.id_payment){
 				solicitud.last_state = "waiting_id"
-				message = "Ok, nuestras cuentas son:\n" + cuentas + "\nEn cuanto hagas la transferencia, me dejas el número de operación para culminar el pedido."
+				message = "Ok, nuestras cuentas son:" + empresa.banks.map(v => `\n${v.name}\n${v.number}\n${v.type}\n${v.titular_name}\n${v.identity_card}\n`) + "\nEn cuanto hagas la transferencia, me dejas el número de operación para culminar el pedido."
 			}
 			else if((solicitud.type_payment == 'transferencia' && solicitud.id_payment && !solicitud.procesado) || solicitud.type_payment == "efectivo"){
 				solicitud.last_state = "waiting_confirm_delivery"
@@ -384,21 +394,6 @@ client.connect(function(err) {
 
 			return id
 		}
-
-		console.log(req.body,req.headers)
-
-		if(!req.headers.empresa)
-			return res.json({
-				data: []
-			})
-
-		var empresa = await getCompany(req.headers.empresa)
-		console.log(empresa)
-
-		if(!empresa)
-			return res.json({
-				data: []
-			})
 
 		var sender = req.body.senderName
 		var mensaje = req.body.senderMesage
