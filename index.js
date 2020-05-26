@@ -68,6 +68,7 @@ client.connect(function(err) {
 					quantity: 1,
 					currency: 1,
 					real_name: 1,
+					description: 1,
 					_id: 1,
 					score: {
 						$meta: "textScore"
