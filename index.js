@@ -42,340 +42,348 @@ client.connect(function(err) {
 
 	var cuentas = 'Banesco 0134'
 
-	function searchProduct(text){
-		return new Promise(resolve => {
-
-			db1.collection('productos')
-			.aggregate([{
-				$match: {
-					$text: {
-						$search: text
-					},
-					quantity: {
-						$gt: 0
-					}
-				}
-			},{
-				$sort: {
-					score: {
-						$meta: "textScore"
-					}
-				}
-			},{
-				$project: {
-					name: 1,
-					price: 1,
-					quantity: 1,
-					currency: 1,
-					real_name: 1,
-					description: 1,
-					_id: 1,
-					score: {
-						$meta: "textScore"
-					}
-				}
-			}], function(err, data){
-				
-				data.toArray(function(err,list){
-					
-					var result = []
-
-					if(list.length){
-						result.push(list[0])
-						var score = list[0].score
-
-						list.filter((v,k) => k > 0).forEach(v => {
-							if(v.score == score)
-								result.push(v)
-						})
-					}
-
-					resolve(result)
-				})
-			})
-
-		})
-	}
-
-	function getAction(text){
-		return new Promise(resolve => {
-
-			db1.collection('acciones')
-			.aggregate([{
-				$match: {
-					$text: {
-						$search: text
-					}
-				}
-			},{
-				$sort: {
-					score: {
-						$meta: "textScore"
-					}
-				}
-			},{
-				$project: {
-					action: 1,
-					term: 1,
-					_id: 1,
-					score: {
-						$meta: "textScore"
-					}
-				}
-			}], function(err, data){
-				
-				data.limit(1).toArray(function(err,list){
-					console.log(list)
-					resolve(list.length && list[0].score >= 0.80 ? list[0].action : null)
-				})
-			})
-
-		})
-	}
-
-	function getQuantity(text){
-		return new Promise(resolve => {
-
-			db1.collection('cantidades')
-			.aggregate([{
-				$match: {
-					$text: {
-						$search: text
-					}
-				}
-			},{
-				$sort: {
-					score: {
-						$meta: "textScore"
-					}
-				}
-			}], function(err, data){
-				
-				data.limit(1).toArray(function(err,list){
-					resolve(list.length ? list[0].cantidad : null)
-				})
-			})
-
-		})
-	}
-
-	function chatActive(sender){
-		return new Promise(resolve => {
-
-			db1.collection('mensajes').findOne({
-				sender
-			}, {
-				sort: {
-					createdAt: -1
-				}
-			}, (err, message) => {
-				if(!message)
-					return resolve(false)
-				var date = moment(message.createdAt)
-				var now = moment()
-				var diff = now.diff(date, 'hour')
-				resolve(diff < 1)
-			})
-
-		})
-	}
-
-	function all_items(){
-		return new Promise(resolve => {
-
-			db1.collection('productos').find({
-				quantity: {
-					$gt: 0
-				}
-			}, {
-				sort: {
-					createdAt: -1
-				}
-			}, (err, productos) => {
-				resolve(productos.toArray())
-			})
-
-		})
-	}
-
-	function lastRequest(sender){
-		return new Promise(resolve => {
-
-			db1.collection('solicitudes').findOne({
-				sender,
-				procesado: {
-					$exists: false
-				}
-			}, {
-				sort: {
-					createdAt: -1
-				}
-			}, (err, data) => {
-				if(!data)
-					return resolve({productos: [], consultas: [], sender})
-				var date = moment(data.createdAt)
-				var now = moment()
-				var diff = now.diff(date, 'hours')
-				resolve(diff < 1 ? data : {productos: [], consultas: [], sender})
-			})
-
-		})
-	}
-
-	function getProduct(_id){
-		return new Promise(resolve => {
-
-			db1.collection('productos').findOne({
-				_id: ObjectId(_id),
-			}, {
-				sort: {
-					createdAt: -1
-				}
-			}, (err, data) => {
-				resolve({
-					...data,
-					score: 1
-				})
-			})
-
-		})
-	}
-
-	function getCompany(_id){
-		return new Promise(resolve => {
-
-			db1.collection('empresas').findOne({
-				_id: ObjectId(_id),
-			}, {}, (err, data) => {
-				// data.toArray().then(res => console.log(res))
-				resolve(data)
-			})
-
-		})
-	}
-
-	function saveMessage(message){
-		return new Promise(resolve => {
-
-			db1.collection('mensajes').insertOne({
-				...message,
-				createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
-				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
-			}, {}, (err, doc) => resolve(doc))
-
-		})
-	}
-
-	function saveRequest(request){
-		return new Promise(resolve => {
-
-			var data = {
-				...request,
-				createdAt: request.createdAt || moment().format('YYYY-MM-DD HH:mm:ss'),
-				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
-			}
-
-			if(request._id)
-				db1.collection('solicitudes').update({ _id: request._id }, data, { upsert: true }, (err, doc) => resolve(doc))
-			else
-				db1.collection('solicitudes').insert(data, (err, doc) => resolve(doc))
-
-		})
-	}
-
-	function setRequestProduct(solicitud, data, cantidad){
-		if(!solicitud.productos.find(v => String(v._id) == String(data[0]._id)))
-			return [...solicitud.productos, {
-				...data[0],
-				cantidad
-			}]
-		else
-			return solicitud.productos.map(v => {
-				if(String(v._id) == String(data[0]._id))
-					return {
-						...v,
-						cantidad
-					}
-				else
-					return v
-			})
-	}
-
-	function finalMessage(solicitud, type){
-		var message = ""
-
-		if(['delivery_pedido','pedido','delivery'].indexOf(type) !== -1){
-
-			if(!solicitud.productos.length)
-				message = " ¿Quieres realizar algún pedido?"
-			else{
-				message = " ¿Quieres algo más?"
-			}
-			
-			solicitud.last_state = 'question_more'	
-
-		}
-
-		return message
-	}
-
-	function nextStep(solicitud){
-		var message = ""
-		solicitud.no_more = true
-
-		for(var i in solicitud.productos){
-			if(!solicitud.productos[i].cantidad){
-				solicitud.last_product = solicitud.productos[i]._id
-				solicitud.last_state = "waiting_quantity"
-				message = "Por favor me indicas ¿Qué cantidad de " + solicitud.productos[i].real_name + " vas a querer?"
-				return message
-			}
-		}
-
-		if(solicitud.delivery === undefined || solicitud.delivery === null){
-			solicitud.last_state = "delivery_pedido"
-			message = " ¿Quieres que hagamos entrega a domicilio?"
-		}
-		else if(!solicitud.type_payment){
-			solicitud.last_state = "type_payment"
-			message = " ¿Vas a pagar en efectivo o transferencia?"
-		}
-		else if(!solicitud.confirm_request){
-			solicitud.last_state = "confirm_request"
-			message = " Para confirmar el pedido:"
-			var total = 0
-			solicitud.productos.forEach(v => {
-				total += v.cantidad * v.price
-				message += `\n- ${v.cantidad} ${v.real_name} = ${v.currency}${v.cantidad * v.price}`
-			})
-			message += `\nEn total serían $${total}. ¿Es correcto?`
-		}
-		else if(solicitud.type_payment == 'transferencia' && !solicitud.id_payment){
-			solicitud.last_state = "waiting_id"
-			message = "Ok, nuestras cuentas son:\n" + cuentas + "\nEn cuanto hagas la transferencia, me dejas el número de operación para culminar el pedido."
-		}
-		else if((solicitud.type_payment == 'transferencia' && solicitud.id_payment && !solicitud.procesado) || solicitud.type_payment == "efectivo"){
-			solicitud.last_state = "waiting_confirm_delivery"
-			solicitud.procesado = true
-			message = "Ok, gracias por contactarnos, el pedido ha sido procesado, te confirmaremos la entrega."
-		}
-
-		return message
-	}
-
-	function hasPayId(mensaje){
-		var id = false
-
-		mensaje.split(' ').forEach(v => {
-			if(Number(v))
-				id = Number(v)
-		})
-
-		return id
-	}
 
 
 	app.post('/', async function(req, res) {
+		
+		function searchProduct(text){
+			return new Promise(resolve => {
+
+				db1.collection('productos')
+				.aggregate([{
+					$match: {
+						$text: {
+							$search: text
+						},
+						quantity: {
+							$gt: 0
+						},
+						company: req.headers.empresa
+					}
+				},{
+					$sort: {
+						score: {
+							$meta: "textScore"
+						}
+					}
+				},{
+					$project: {
+						name: 1,
+						price: 1,
+						quantity: 1,
+						currency: 1,
+						real_name: 1,
+						description: 1,
+						_id: 1,
+						score: {
+							$meta: "textScore"
+						}
+					}
+				}], function(err, data){
+					
+					data.toArray(function(err,list){
+						
+						var result = []
+
+						if(list.length){
+							result.push(list[0])
+							var score = list[0].score
+
+							list.filter((v,k) => k > 0).forEach(v => {
+								if(v.score == score)
+									result.push(v)
+							})
+						}
+
+						resolve(result)
+					})
+				})
+
+			})
+		}
+
+		function getAction(text){
+			return new Promise(resolve => {
+
+				db1.collection('acciones')
+				.aggregate([{
+					$match: {
+						$text: {
+							$search: text
+						}
+					}
+				},{
+					$sort: {
+						score: {
+							$meta: "textScore"
+						}
+					}
+				},{
+					$project: {
+						action: 1,
+						term: 1,
+						_id: 1,
+						score: {
+							$meta: "textScore"
+						}
+					}
+				}], function(err, data){
+					
+					data.limit(1).toArray(function(err,list){
+						console.log(list)
+						resolve(list.length && list[0].score >= 0.80 ? list[0].action : null)
+					})
+				})
+
+			})
+		}
+
+		function getQuantity(text){
+			return new Promise(resolve => {
+
+				db1.collection('cantidades')
+				.aggregate([{
+					$match: {
+						$text: {
+							$search: text
+						}
+					}
+				},{
+					$sort: {
+						score: {
+							$meta: "textScore"
+						}
+					}
+				}], function(err, data){
+					
+					data.limit(1).toArray(function(err,list){
+						resolve(list.length ? list[0].cantidad : null)
+					})
+				})
+
+			})
+		}
+
+		function chatActive(sender){
+			return new Promise(resolve => {
+
+				db1.collection('mensajes').findOne({
+					sender,
+					company: req.headers.empresa
+				}, {
+					sort: {
+						createdAt: -1
+					}
+				}, (err, message) => {
+					if(!message)
+						return resolve(false)
+					var date = moment(message.createdAt)
+					var now = moment()
+					var diff = now.diff(date, 'hour')
+					resolve(diff < 1)
+				})
+
+			})
+		}
+
+		function all_items(){
+			return new Promise(resolve => {
+
+				db1.collection('productos').find({
+					quantity: {
+						$gt: 0
+					},
+					company: req.headers.empresa
+				}, {
+					sort: {
+						createdAt: -1
+					}
+				}, (err, productos) => {
+					resolve(productos.toArray())
+				})
+
+			})
+		}
+
+		function lastRequest(sender){
+			return new Promise(resolve => {
+
+				db1.collection('solicitudes').findOne({
+					sender,
+					procesado: {
+						$exists: false
+					},
+					company: req.headers.empresa
+				}, {
+					sort: {
+						createdAt: -1
+					}
+				}, (err, data) => {
+					if(!data)
+						return resolve({productos: [], consultas: [], sender})
+					var date = moment(data.createdAt)
+					var now = moment()
+					var diff = now.diff(date, 'hours')
+					resolve(diff < 1 ? data : {productos: [], consultas: [], sender})
+				})
+
+			})
+		}
+
+		function getProduct(_id){
+			return new Promise(resolve => {
+
+				db1.collection('productos').findOne({
+					_id: ObjectId(_id),
+					company: req.headers.empresa
+				}, {
+					sort: {
+						createdAt: -1
+					}
+				}, (err, data) => {
+					resolve({
+						...data,
+						score: 1
+					})
+				})
+
+			})
+		}
+
+		function getCompany(_id){
+			return new Promise(resolve => {
+
+				db1.collection('empresas').findOne({
+					_id: ObjectId(_id),
+				}, {}, (err, data) => {
+					// data.toArray().then(res => console.log(res))
+					resolve(data)
+				})
+
+			})
+		}
+
+		function saveMessage(message){
+			return new Promise(resolve => {
+
+				db1.collection('mensajes').insertOne({
+					...message,
+					createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+					updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+					company: req.headers.empresa
+				}, {}, (err, doc) => resolve(doc))
+
+			})
+		}
+
+		function saveRequest(request){
+			return new Promise(resolve => {
+
+				var data = {
+					...request,
+					createdAt: request.createdAt || moment().format('YYYY-MM-DD HH:mm:ss'),
+					updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+					company: req.headers.empresa
+				}
+
+				if(request._id)
+					db1.collection('solicitudes').update({ _id: request._id }, data, { upsert: true }, (err, doc) => resolve(doc))
+				else
+					db1.collection('solicitudes').insert(data, (err, doc) => resolve(doc))
+
+			})
+		}
+
+		function setRequestProduct(solicitud, data, cantidad){
+			if(!solicitud.productos.find(v => String(v._id) == String(data[0]._id)))
+				return [...solicitud.productos, {
+					...data[0],
+					cantidad
+				}]
+			else
+				return solicitud.productos.map(v => {
+					if(String(v._id) == String(data[0]._id))
+						return {
+							...v,
+							cantidad
+						}
+					else
+						return v
+				})
+		}
+
+		function finalMessage(solicitud, type){
+			var message = ""
+
+			if(['delivery_pedido','pedido','delivery'].indexOf(type) !== -1){
+
+				if(!solicitud.productos.length)
+					message = " ¿Quieres realizar algún pedido?"
+				else{
+					message = " ¿Quieres algo más?"
+				}
+				
+				solicitud.last_state = 'question_more'	
+
+			}
+
+			return message
+		}
+
+		function nextStep(solicitud){
+			var message = ""
+			solicitud.no_more = true
+
+			for(var i in solicitud.productos){
+				if(!solicitud.productos[i].cantidad){
+					solicitud.last_product = solicitud.productos[i]._id
+					solicitud.last_state = "waiting_quantity"
+					message = "Por favor me indicas ¿Qué cantidad de " + solicitud.productos[i].real_name + " vas a querer?"
+					return message
+				}
+			}
+
+			if(solicitud.delivery === undefined || solicitud.delivery === null){
+				solicitud.last_state = "delivery_pedido"
+				message = " ¿Quieres que hagamos entrega a domicilio?"
+			}
+			else if(!solicitud.type_payment){
+				solicitud.last_state = "type_payment"
+				message = " ¿Vas a pagar en efectivo o transferencia?"
+			}
+			else if(!solicitud.confirm_request){
+				solicitud.last_state = "confirm_request"
+				message = " Para confirmar el pedido:"
+				var total = 0
+				solicitud.productos.forEach(v => {
+					total += v.cantidad * v.price
+					message += `\n- ${v.cantidad} ${v.real_name} = ${v.currency}${v.cantidad * v.price}`
+				})
+				message += `\nEn total serían $${total}. ¿Es correcto?`
+			}
+			else if(solicitud.type_payment == 'transferencia' && !solicitud.id_payment){
+				solicitud.last_state = "waiting_id"
+				message = "Ok, nuestras cuentas son:\n" + cuentas + "\nEn cuanto hagas la transferencia, me dejas el número de operación para culminar el pedido."
+			}
+			else if((solicitud.type_payment == 'transferencia' && solicitud.id_payment && !solicitud.procesado) || solicitud.type_payment == "efectivo"){
+				solicitud.last_state = "waiting_confirm_delivery"
+				solicitud.procesado = true
+				message = "Ok, gracias por contactarnos, el pedido ha sido procesado, te confirmaremos la entrega."
+			}
+
+			return message
+		}
+
+		function hasPayId(mensaje){
+			var id = false
+
+			mensaje.split(' ').forEach(v => {
+				if(Number(v))
+					id = Number(v)
+			})
+
+			return id
+		}
 
 		console.log(req.body,req.headers)
 
