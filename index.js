@@ -89,16 +89,38 @@ client.connect(function(err) {
 		return res.json(productos)
 	})
 
-	app.put('/empresa/:id', async function(req, res) {
+	app.put('/productos/:id', async function(req, res) {
 
-		// var empresa = await getCompany(req.params.id)
-		console.log(req.body,req.params)
 		delete req.body._id
-		db1.collection('empresas').updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body }, {upsert: true}).then(doc => {
-			// console.log(doc)
+		db1.collection('productos').updateOne({ _id: ObjectId(req.params.id) }, { $set: {
+				...req.body,
+				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+			} }, {upsert: true}).then(doc => {
 			res.json(true)
 		})
-		// return res.json(null)
+		
+	})
+
+	app.post('/productos', async function(req, res) {
+
+		db1.collection('empresas').insertOne({
+			...req.body,
+			createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+			updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+			company: req.headers.empresa
+		}, {}).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
+	app.put('/empresa/:id', async function(req, res) {
+
+		delete req.body._id
+		db1.collection('empresas').updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body }, {upsert: true}).then(doc => {
+			res.json(true)
+		})
+		
 	})
 
 	app.post('/', async function(req, res) {
