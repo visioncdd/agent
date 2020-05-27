@@ -280,8 +280,7 @@ client.connect(function(err) {
 				}], function(err, data){
 					
 					data.limit(1).toArray(function(err,list){
-						console.log(list)
-						resolve(list.length && list[0].score >= 0.80 ? list[0].action : null)
+						resolve(list.length && list[0].score >= 1 ? list[0].answer : null)
 					})
 				})
 
@@ -547,7 +546,7 @@ client.connect(function(err) {
 		var automatica = await searchAuto(mensaje)
 
 		if(automatica){
-			mensaje = automatica.answer
+			mensaje = automatica
 			saveMessage({
 				message: mensaje,
 				sender,
