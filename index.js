@@ -506,332 +506,346 @@ client.connect(function(err) {
 		var sender = req.body.senderName
 		var mensaje = req.body.senderMesage
 
-		var data = await searchProduct(mensaje)
-		var action = await getAction(mensaje)
+		var automatica = await searchAuto(mensaje)
 
-
-		var message = ""
-
-		var activa = await chatActive(sender)
-		var solicitud = await lastRequest(sender)
-
-		var cities = empresa.cities
-
-		// if(!activa)
-			// message = "Hola. "
-
-
-		var cantidad = await getQuantity(mensaje)
-		console.log(cantidad)
-		console.log(action,data.map(v => v.name), activa)
-
-		if((solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple") && !action && mensaje.toLowerCase()[0] == "y")
-			if(!data.length)
-				message += "Disculpa, no tengo respuesta a eso."
-			else
-				action = "disponibilidad"
-
-		// console.log(action)
-
-		if(!data.length){
-
-			if(action == 'lista_productos'){
-				action = 'disponibilidad'
-				data = await all_items(req.headers.empresa)
-				solicitud.consultas = [...solicitud.consultas, ...data]
-			}
-
-			else if(action == "no_more")
-				if(solicitud.productos.length)
-					message += nextStep(solicitud)
-				else
-					message += "¿Te puedo ayudar en algo mas?"
-
-			else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
-				var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
-				if(producto){
-					action = 'pedido'
-					data = [producto]
-					solicitud.last_state = null
-					solicitud.last_product = null
-				}
-			}
-
-			else if(solicitud.last_state == 'waiting_id' && hasPayId(mensaje)){
-				solicitud.id_payment = hasPayId(mensaje)
-				message += nextStep(solicitud)
-			}
-
-			else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
-					message += "Genial, ¿Me indicas lo que necesitas?"
-					solicitud.last_state = "what_need"
-				}
-				else if((mensaje.toLowerCase().split('no').length > 1 || mensaje.toLowerCase().split('solo eso').length > 1 || mensaje.toLowerCase().split('nada mas').length > 1) && mensaje.split('').length < 25){
-					if(solicitud.productos.length){
-						message += nextStep(solicitud)
-						action = null
-					}
-					else{
-						message += "Vale, gracias por contactarnos, estamos a tu orden."
-						solicitud.last_state = null
-					}
-				}
-			}
-
-			else if(solicitud.last_state == 'delivery_pedido' && !action){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
-					message += "Ok, perfecto."
-					solicitud.delivery = true
-					if(solicitud.no_more)
-						message += nextStep(solicitud)
-					else
-						message += finalMessage(solicitud,'delivery_pedido')
-				}
-				else if(mensaje.toLowerCase().split('no').length > 1 && mensaje.split('').length < 25){
-					message += "Ok."
-					if(solicitud.no_more){
-						solicitud.delivery = false
-						message += nextStep(solicitud)
-					}
-					else{
-						solicitud.delivery = false
-						message += finalMessage(solicitud,'delivery_pedido')
-					}
-				}
-			}
-
-			else if(solicitud.last_state == 'type_payment' && !action){
-				if(mensaje.toLowerCase().split('efectivo').length > 1){
-					message += "Ok, perfecto."
-					solicitud.type_payment = 'efectivo'
-					message += nextStep(solicitud)
-				}
-				else if(mensaje.toLowerCase().split('transferencia').length > 1){
-					message += "Ok, perfecto."
-					solicitud.type_payment = 'transferencia'
-					message += nextStep(solicitud)
-				}
-			}
-
-			else if((mensaje.toLowerCase().split('ok').length > 1 || mensaje.toLowerCase().split('vale').length > 1 || mensaje.toLowerCase().split('esta bien').length > 1 || mensaje.toLowerCase().split('está bien').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
-				action = "pedido"
-				solicitud.last_state = "decir_precio"
-				data = await getProduct(solicitud.last_product)
-				data = [data]
-				cantidad = solicitud.last_cantidad
-			}
-
-			else if(solicitud.last_state == 'confirm_request' && !action){
-				if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
-					// message += "Ok, perfecto."
-					solicitud.confirm_request = true
-					message += nextStep(solicitud)
-				}
-				else if(mensaje.toLowerCase().split('no').length > 1 && mensaje.split('').length < 7){
-					message += "Para corregir, por favor dime el producto y la cantidad de lo que quieres."
-					solicitud.last_state = null
-				}
-			}
-
+		if(automatica){
+			mensaje = automatica.answer
+			saveMessage({
+				message: mensaje,
+				sender,
+				message_sended: message,
+			})
 		}
 		else{
-			if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more" || (cantidad && data.length == 1 && solicitud.consultas.find(v => v._id == data[0]._id))) && !action)
-				action = "pedido"
-			else if(cantidad && (!action || action == "pedido") && data.length == 1 && !solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
-				action = null
-				message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
-				if(data[0].description)
-					message += `\n${data[0].description}`
-				solicitud.last_state = "decir_precio"
-				solicitud.last_product = data[0]._id
-				solicitud.last_cantidad = cantidad
-			}
-			else if(action == "no_more" || (cantidad && (!action || action == "pedido") && data.length == 1 && solicitud.consultas.find(v => String(v._id) == String(data[0]._id))))
-				action = "pedido"
-		}
 
-		if(!action && data.length && !message)
-			action = "disponibilidad"
+			var data = await searchProduct(mensaje)
+			var action = await getAction(mensaje)
 
-		if(action)
-			solicitud.last_action = action
 
-		switch(action){
-			case 'disponibilidad':
+			var message = ""
 
-				if(data.length){
-					if(data.length > 1){
-						message += "Tenemos disponible:"
-						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ''))
-						solicitud.last_state = "disponibilidad_multiple"
+			var activa = await chatActive(sender)
+			var solicitud = await lastRequest(sender)
+
+			var cities = empresa.cities
+
+			// if(!activa)
+				// message = "Hola. "
+
+
+			var cantidad = await getQuantity(mensaje)
+			console.log(cantidad)
+			console.log(action,data.map(v => v.name), activa)
+
+			if((solicitud.last_action == "disponibilidad" || solicitud.last_action == "disponibilidad_multiple") && !action && mensaje.toLowerCase()[0] == "y")
+				if(!data.length)
+					message += "Disculpa, no tengo respuesta a eso."
+				else
+					action = "disponibilidad"
+
+			// console.log(action)
+
+			if(!data.length){
+
+				if(action == 'lista_productos'){
+					action = 'disponibilidad'
+					data = await all_items(req.headers.empresa)
+					solicitud.consultas = [...solicitud.consultas, ...data]
+				}
+
+				else if(action == "no_more")
+					if(solicitud.productos.length)
+						message += nextStep(solicitud)
+					else
+						message += "¿Te puedo ayudar en algo mas?"
+
+				else if(cantidad && solicitud.last_state == 'waiting_quantity' && solicitud.last_product){
+					var producto = solicitud.productos.find(v => String(v._id) == String(solicitud.last_product))
+					if(producto){
+						action = 'pedido'
+						data = [producto]
+						solicitud.last_state = null
+						solicitud.last_product = null
 					}
-					else if(data.length == 1){
-						if(data[0].score < 1)
-							message += `Puedes ser un poco más específico(a)?`
+				}
+
+				else if(solicitud.last_state == 'waiting_id' && hasPayId(mensaje)){
+					solicitud.id_payment = hasPayId(mensaje)
+					message += nextStep(solicitud)
+				}
+
+				else if(solicitud.last_state == 'question_more' && !action && !solicitud.no_more){
+					if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
+						message += "Genial, ¿Me indicas lo que necesitas?"
+						solicitud.last_state = "what_need"
+					}
+					else if((mensaje.toLowerCase().split('no').length > 1 || mensaje.toLowerCase().split('solo eso').length > 1 || mensaje.toLowerCase().split('nada mas').length > 1) && mensaje.split('').length < 25){
+						if(solicitud.productos.length){
+							message += nextStep(solicitud)
+							action = null
+						}
 						else{
-							message += `Si disponemos de ${data[0].real_name}, en ${data[0].currency}${data[0].price}`
-							if(data[0].description)
-								message += `\n${data[0].description}`
-							solicitud.last_state = 'disponibilidad_singular'
-							solicitud.last_product = data[0]._id
+							message += "Vale, gracias por contactarnos, estamos a tu orden."
+							solicitud.last_state = null
 						}
 					}
 				}
-				else
-					message += "No, no disponemos"
 
-				solicitud.consultas = [...solicitud.consultas, ...data]
-
-			break;
-
-			case 'delivery':
-
-				if(empresa.delivery){
-					message += "Si, si hacemos entrega a domicilio en toda " + cities + ". " + (empresa.delivery_cost ? `Cuesta ${empresa.delivery_currency}${empresa.delivery_cost}` : 'No tiene costo') + "\n¿Lo quieres?"
-					solicitud.last_state = 'delivery_pedido'
-				}
-				else
-					message += "No hacemos entrega a domicilio"
-				
-				// message += finalMessage(solicitud,'delivery')
-
-			break;
-
-			case 'delivery_pedido':
-
-				if(empresa.delivery){
-					message += "Ok, perfecto."
-					solicitud.delivery = true
-
-					message += finalMessage(solicitud,'delivery_pedido')
-				}
-				else
-					message += "No hacemos entrega a domicilio"
-
-			break;
-
-			case 'informacion':
-
-				if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Lo siento, lo que pides no disponemos."
-
-			break;
-
-			case 'question_type_payment':
-
-				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "En efectivo o transferencia"
-
-			break;
-
-			case 'banks':
-
-				if(empresa.banks.length == 1)				
-					message += "Por ahora solo " + empresa.banks[0].name
-				else
-					message += `Trabajamos con ${empresa.banks.map(v => v.name).join(empresa.banks.length == 2 ? ' y ' : ', ')}`
-
-			break;
-
-			case 'question_major':
-
-				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Por el momento no vendemos al mayor."
-
-			break;
-
-			case 'delivery_city':
-
-				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Hacemos envíos en toda " + cities
-
-			break;
-
-			case 'buenas':
-
-				// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
-					message += "Buenas..."
-
-			break;
-
-			case 'pedido':
-
-				if(!data.length){
-					if(solicitud.last_state == 'delivery_pedido'){
+				else if(solicitud.last_state == 'delivery_pedido' && !action){
+					if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
+						message += "Ok, perfecto."
 						solicitud.delivery = true
-						message += 'Ok, perfecto.'
+						if(solicitud.no_more)
+							message += nextStep(solicitud)
+						else
+							message += finalMessage(solicitud,'delivery_pedido')
+					}
+					else if(mensaje.toLowerCase().split('no').length > 1 && mensaje.split('').length < 25){
+						message += "Ok."
+						if(solicitud.no_more){
+							solicitud.delivery = false
+							message += nextStep(solicitud)
+						}
+						else{
+							solicitud.delivery = false
+							message += finalMessage(solicitud,'delivery_pedido')
+						}
+					}
+				}
+
+				else if(solicitud.last_state == 'type_payment' && !action){
+					if(mensaje.toLowerCase().split('efectivo').length > 1){
+						message += "Ok, perfecto."
+						solicitud.type_payment = 'efectivo'
+						message += nextStep(solicitud)
+					}
+					else if(mensaje.toLowerCase().split('transferencia').length > 1){
+						message += "Ok, perfecto."
+						solicitud.type_payment = 'transferencia'
+						message += nextStep(solicitud)
+					}
+				}
+
+				else if((mensaje.toLowerCase().split('ok').length > 1 || mensaje.toLowerCase().split('vale').length > 1 || mensaje.toLowerCase().split('esta bien').length > 1 || mensaje.toLowerCase().split('está bien').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25 && solicitud.last_state == "decir_precio"){
+					action = "pedido"
+					solicitud.last_state = "decir_precio"
+					data = await getProduct(solicitud.last_product)
+					data = [data]
+					cantidad = solicitud.last_cantidad
+				}
+
+				else if(solicitud.last_state == 'confirm_request' && !action){
+					if((mensaje.toLowerCase().split('si').length > 1 || mensaje.toLowerCase().split('sí').length > 1 || mensaje.toLowerCase().split('correcto').length > 1 || mensaje.toLowerCase().split('asi es').length > 1 || mensaje.toLowerCase().split('claro').length > 1 || mensaje.toLowerCase().split('perfecto').length > 1 || mensaje.toLowerCase().split('genial').length > 1) && mensaje.split('').length < 25){
+						// message += "Ok, perfecto."
+						solicitud.confirm_request = true
+						message += nextStep(solicitud)
+					}
+					else if(mensaje.toLowerCase().split('no').length > 1 && mensaje.split('').length < 7){
+						message += "Para corregir, por favor dime el producto y la cantidad de lo que quieres."
 						solicitud.last_state = null
 					}
-					else if(solicitud.last_state == 'disponibilidad_singular' && cantidad){
-						solicitud.productos = setRequestProduct(solicitud,solicitud.consultas.filter(v => String(v._id) == String(solicitud.last_product)),cantidad)
-						message += "Ok, perfecto."
-						solicitud.last_product = null
-						solicitud.last_state = null
+				}
+
+			}
+			else{
+				if((solicitud.last_state == "what_need" || solicitud.last_state == "question_more" || (cantidad && data.length == 1 && solicitud.consultas.find(v => v._id == data[0]._id))) && !action)
+					action = "pedido"
+				else if(cantidad && (!action || action == "pedido") && data.length == 1 && !solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
+					action = null
+					message += data[0].real_name + ` tiene un costo de ${data[0].currency}${data[0].price}`
+					if(data[0].description)
+						message += `\n${data[0].description}`
+					solicitud.last_state = "decir_precio"
+					solicitud.last_product = data[0]._id
+					solicitud.last_cantidad = cantidad
+				}
+				else if(action == "no_more" || (cantidad && (!action || action == "pedido") && data.length == 1 && solicitud.consultas.find(v => String(v._id) == String(data[0]._id))))
+					action = "pedido"
+			}
+
+			if(!action && data.length && !message)
+				action = "disponibilidad"
+
+			if(action)
+				solicitud.last_action = action
+
+			switch(action){
+				case 'disponibilidad':
+
+					if(data.length){
+						if(data.length > 1){
+							message += "Tenemos disponible:"
+							data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ''))
+							solicitud.last_state = "disponibilidad_multiple"
+						}
+						else if(data.length == 1){
+							if(data[0].score < 1)
+								message += `Puedes ser un poco más específico(a)?`
+							else{
+								message += `Si disponemos de ${data[0].real_name}, en ${data[0].currency}${data[0].price}`
+								if(data[0].description)
+									message += `\n${data[0].description}`
+								solicitud.last_state = 'disponibilidad_singular'
+								solicitud.last_product = data[0]._id
+							}
+						}
 					}
 					else
-						message += 'Disculpa, no tenemos.'
+						message += "No, no disponemos"
 
-					message += finalMessage(solicitud,'pedido')
-				}
-				else{
+					solicitud.consultas = [...solicitud.consultas, ...data]
+
+				break;
+
+				case 'delivery':
+
+					if(empresa.delivery){
+						message += "Si, si hacemos entrega a domicilio en toda " + cities + ". " + (empresa.delivery_cost ? `Cuesta ${empresa.delivery_currency}${empresa.delivery_cost}` : 'No tiene costo') + "\n¿Lo quieres?"
+						solicitud.last_state = 'delivery_pedido'
+					}
+					else
+						message += "No hacemos entrega a domicilio"
 					
-					if(data.length == 1){
+					// message += finalMessage(solicitud,'delivery')
 
-						if(data[0].score >= 1 || solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
+				break;
 
-							if(!cantidad){
-								var producto = solicitud.consultas.find(v => v._id == data[0]._id)
-								if(!producto){
-									message += `Ok, el costo es de ${data[0].currency}${data[0].price}. `
-									if(data[0].description)
-										message += `\n${data[0].description}\n`
+				case 'delivery_pedido':
+
+					if(empresa.delivery){
+						message += "Ok, perfecto."
+						solicitud.delivery = true
+
+						message += finalMessage(solicitud,'delivery_pedido')
+					}
+					else
+						message += "No hacemos entrega a domicilio"
+
+				break;
+
+				case 'informacion':
+
+					if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+						message += "Lo siento, lo que pides no disponemos."
+
+				break;
+
+				case 'question_type_payment':
+
+					// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+						message += "En efectivo o transferencia"
+
+				break;
+
+				case 'banks':
+
+					if(empresa.banks.length == 1)				
+						message += "Por ahora solo " + empresa.banks[0].name
+					else
+						message += `Trabajamos con ${empresa.banks.map(v => v.name).join(empresa.banks.length == 2 ? ' y ' : ', ')}`
+
+				break;
+
+				case 'question_major':
+
+					// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+						message += "Por el momento no vendemos al mayor."
+
+				break;
+
+				case 'delivery_city':
+
+					// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+						message += "Hacemos envíos en toda " + cities
+
+				break;
+
+				case 'buenas':
+
+					// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
+						message += "Buenas..."
+
+				break;
+
+				case 'pedido':
+
+					if(!data.length){
+						if(solicitud.last_state == 'delivery_pedido'){
+							solicitud.delivery = true
+							message += 'Ok, perfecto.'
+							solicitud.last_state = null
+						}
+						else if(solicitud.last_state == 'disponibilidad_singular' && cantidad){
+							solicitud.productos = setRequestProduct(solicitud,solicitud.consultas.filter(v => String(v._id) == String(solicitud.last_product)),cantidad)
+							message += "Ok, perfecto."
+							solicitud.last_product = null
+							solicitud.last_state = null
+						}
+						else
+							message += 'Disculpa, no tenemos.'
+
+						message += finalMessage(solicitud,'pedido')
+					}
+					else{
+						
+						if(data.length == 1){
+
+							if(data[0].score >= 1 || solicitud.consultas.find(v => String(v._id) == String(data[0]._id))){
+
+								if(!cantidad){
+									var producto = solicitud.consultas.find(v => v._id == data[0]._id)
+									if(!producto){
+										message += `Ok, el costo es de ${data[0].currency}${data[0].price}. `
+										if(data[0].description)
+											message += `\n${data[0].description}\n`
+									}
+									message += "Me indicas la cantidad?"
+									solicitud.last_state = "waiting_quantity"
+									solicitud.last_product = data[0]._id
+									solicitud.productos = setRequestProduct(solicitud,data,cantidad)
+									// return
+									// console.log()
 								}
-								message += "Me indicas la cantidad?"
-								solicitud.last_state = "waiting_quantity"
-								solicitud.last_product = data[0]._id
-								solicitud.productos = setRequestProduct(solicitud,data,cantidad)
-								// return
-								// console.log()
+								else{
+									message += "Ok, perfecto."
+									solicitud.productos = setRequestProduct(solicitud,data,cantidad)
+									message += finalMessage(solicitud, 'pedido')
+								}
+
+
 							}
 							else{
-								message += "Ok, perfecto."
-								solicitud.productos = setRequestProduct(solicitud,data,cantidad)
-								message += finalMessage(solicitud, 'pedido')
+								message += `No tenemos exactamente lo que quieres, ¿quizás quieres ${data[0].real_name}? Cuesta ${data[0].currency}${data[0].price}.`
+								if(data[0].description)
+									message += `\n${data[0].description}`
 							}
 
 
 						}
 						else{
-							message += `No tenemos exactamente lo que quieres, ¿quizás quieres ${data[0].real_name}? Cuesta ${data[0].currency}${data[0].price}.`
-							if(data[0].description)
-								message += `\n${data[0].description}`
+							message += "Tenemos disponible:"
+							data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ""))
+							solicitud.consultas = [...solicitud.consultas,...data]
+							solicitud.last_state = "disponibilidad_multiple"
+							// message += "Puedes ser un poco más específico, o pedir 1 producto a la vez?"
 						}
-
-
 					}
-					else{
-						message += "Tenemos disponible:"
-						data.forEach(v => message += `\n- ${v.real_name} en ${v.currency}${v.price}` + (v.description ? `\n${v.description}\n` : ""))
-						solicitud.consultas = [...solicitud.consultas,...data]
-						solicitud.last_state = "disponibilidad_multiple"
-						// message += "Puedes ser un poco más específico, o pedir 1 producto a la vez?"
-					}
-				}
 
-			break;
+				break;
+			}
+
+			solicitud = await saveRequest(solicitud)
+
+			saveMessage({
+				message: mensaje,
+				sender,
+				action,
+				data,
+				message_sended: message,
+				request: solicitud._id
+			})
 		}
 
-		solicitud = await saveRequest(solicitud)
-
-		saveMessage({
-			message: mensaje,
-			sender,
-			action,
-			data,
-			message_sended: message,
-			request: solicitud._id
-		})
 
 		
 
