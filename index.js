@@ -125,7 +125,7 @@ client.connect(function(err) {
 
 	app.get('/respuestas-automaticas', async function(req, res) {
 		db1.collection('respuestas-automaticas').find({
-			company: empresa
+			company: req.headers.empresa
 		}, {
 			sort: {
 				createdAt: -1
