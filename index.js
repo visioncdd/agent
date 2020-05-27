@@ -546,7 +546,7 @@ client.connect(function(err) {
 		var automatica = await searchAuto(mensaje)
 
 		if(automatica){
-			mensaje = automatica
+			message = automatica
 			saveMessage({
 				message: mensaje,
 				sender,
