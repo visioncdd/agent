@@ -48,7 +48,6 @@ client.connect(function(err) {
 				db1.collection('empresas').findOne({
 					_id: id,
 				}, {}, (err, data) => {
-					console.log(err,data)
 					resolve(data)
 				})
 			}
@@ -64,6 +63,14 @@ client.connect(function(err) {
 		var empresa = await getCompany(req.params.id)
 		// console.log(req.body,req.params)
 		return res.json(empresa)
+	})
+
+	app.put('/empresa/:id', async function(req, res) {
+
+		// var empresa = await getCompany(req.params.id)
+		console.log(req.body,req.params)
+		db1.collection('empresas').update({ _id: req.params.id }, req.body, { upsert: true }, (err, doc) => resolve(doc))
+		// return res.json(null)
 	})
 
 	app.post('/', async function(req, res) {
