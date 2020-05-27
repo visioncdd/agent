@@ -58,11 +58,35 @@ client.connect(function(err) {
 		})
 	}
 
+	function all_items(empresa){
+		return new Promise(resolve => {
+
+			db1.collection('productos').find({
+				quantity: {
+					$gt: 0
+				},
+				company: empresa
+			}, {
+				sort: {
+					createdAt: -1
+				}
+			}, (err, productos) => {
+				resolve(productos.toArray())
+			})
+
+		})
+	}
+
 	app.get('/empresa/:id', async function(req, res) {
 
 		var empresa = await getCompany(req.params.id)
 		// console.log(req.body,req.params)
 		return res.json(empresa)
+	})
+
+	app.get('/productos', async function(req, res) {
+		var productos = await all_items(req.headers.empresa)
+		return res.json(productos)
 	})
 
 	app.put('/empresa/:id', async function(req, res) {
@@ -228,25 +252,6 @@ client.connect(function(err) {
 					var now = moment()
 					var diff = now.diff(date, 'hour')
 					resolve(diff < 1)
-				})
-
-			})
-		}
-
-		function all_items(){
-			return new Promise(resolve => {
-
-				db1.collection('productos').find({
-					quantity: {
-						$gt: 0
-					},
-					company: req.headers.empresa
-				}, {
-					sort: {
-						createdAt: -1
-					}
-				}, (err, productos) => {
-					resolve(productos.toArray())
 				})
 
 			})
@@ -455,7 +460,7 @@ client.connect(function(err) {
 
 			if(action == 'lista_productos'){
 				action = 'disponibilidad'
-				data = await all_items()
+				data = await all_items(req.headers.empresa)
 				solicitud.consultas = [...solicitud.consultas, ...data]
 			}
 
