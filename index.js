@@ -108,7 +108,7 @@ client.connect(function(err) {
 			createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
 			updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
 			company: req.headers.empresa
-		}, {}).then(doc => {
+		}, {}, (error, doc) => {
 			res.json(true)
 		})
 		
