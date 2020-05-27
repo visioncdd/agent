@@ -122,6 +122,53 @@ client.connect(function(err) {
 		
 	})
 
+
+	app.get('/respuestas-automaticas', async function(req, res) {
+		db1.collection('respuestas-automaticas').find({
+			company: empresa
+		}, {
+			sort: {
+				createdAt: -1
+			}
+		}, (err, docs) => {
+			res.json(docs.toArray())
+		})
+	})
+
+	app.put('/respuestas-automaticas/:id', async function(req, res) {
+
+		delete req.body._id
+		db1.collection('respuestas-automaticas').updateOne({ _id: ObjectId(req.params.id) }, { $set: {
+				...req.body,
+				updatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+			} }, {upsert: true}).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
+	app.delete('/respuestas-automaticas/:id', async function(req, res) {
+
+		db1.collection('respuestas-automaticas').remove({ _id: ObjectId(req.params.id) }).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
+	app.post('/respuestas-automaticas', async function(req, res) {
+
+		db1.collection('respuestas-automaticas').insertOne({
+			...req.body,
+			createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+			updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+			company: req.headers.empresa
+		}, {}, (error, doc) => {
+			res.json(true)
+		})
+		
+	})
+
+
 	app.put('/empresa/:id', async function(req, res) {
 
 		delete req.body._id
