@@ -69,7 +69,8 @@ client.connect(function(err) {
 
 		// var empresa = await getCompany(req.params.id)
 		console.log(req.body,req.params)
-		db1.collection('empresas').updateOne({ _id: ObjectId(req.params.id) }, req.body, {upsert: true}, (err, doc) => res.json(doc))
+		delete req.body._id
+		db1.collection('empresas').updateOne({ _id: ObjectId(req.params.id) }, req.body, {}, (err, doc) => res.json(doc))
 		// return res.json(null)
 	})
 
