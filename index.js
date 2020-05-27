@@ -544,6 +544,7 @@ client.connect(function(err) {
 		var mensaje = req.body.senderMesage
 
 		var automatica = await searchAuto(mensaje)
+		var activa = await chatActive(sender)
 
 		if(automatica){
 			message = automatica
@@ -560,8 +561,7 @@ client.connect(function(err) {
 
 
 			var message = ""
-
-			var activa = await chatActive(sender)
+			
 			var solicitud = await lastRequest(sender)
 
 			var cities = empresa.cities
