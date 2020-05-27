@@ -34,6 +34,7 @@ client.connect(function(err) {
   // db1.collection('productos').createIndex({preffix: "text"})
   db1.collection('acciones').createIndex({term: "text"})
   db1.collection('cantidades').createIndex({numero: "text",letra: "text"})
+  db1.collection('respuestas-automaticas').createIndex({question: "text"})
 
 
 	app.use(bodyParser.json()); 
@@ -244,6 +245,42 @@ client.connect(function(err) {
 						}
 
 						resolve(result)
+					})
+				})
+
+			})
+		}
+
+		function searchAuto(text){
+			return new Promise(resolve => {
+
+				db1.collection('respuestas-automaticas')
+				.aggregate([{
+					$match: {
+						$text: {
+							$search: text
+						},
+						company: req.headers.empresa
+					}
+				},{
+					$sort: {
+						score: {
+							$meta: "textScore"
+						}
+					}
+				},{
+					$project: {
+						question: 1,
+						answer: 1,
+						_id: 1,
+						score: {
+							$meta: "textScore"
+						}
+					}
+				}], function(err, data){
+					
+					data.limit(1).toArray(function(err,list){
+						resolve(list.length && list[0].score >= 0.80 ? list[0].action : null)
 					})
 				})
 
