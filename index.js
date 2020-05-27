@@ -101,6 +101,14 @@ client.connect(function(err) {
 		
 	})
 
+	app.delete('/productos/:id', async function(req, res) {
+
+		db1.collection('productos').remove({ _id: ObjectId(req.params.id) }).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
 	app.post('/productos', async function(req, res) {
 
 		db1.collection('productos').insertOne({
