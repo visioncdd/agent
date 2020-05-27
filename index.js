@@ -131,7 +131,7 @@ client.connect(function(err) {
 				createdAt: -1
 			}
 		}, (err, docs) => {
-			res.json(docs.toArray())
+			docs.toArray().then(respuestas => res.json(respuestas))
 		})
 	})
 
