@@ -71,8 +71,8 @@ client.connect(function(err) {
 		console.log(req.body,req.params)
 		delete req.body._id
 		db1.collection('empresas').updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body }, {upsert: true}).then(doc => {
-			console.log(doc)
-			res.json(doc)
+			// console.log(doc)
+			res.json(true)
 		})
 		// return res.json(null)
 	})
