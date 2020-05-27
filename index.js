@@ -3,6 +3,7 @@ moment.locale('es');
 
 
 var _ = require('lodash')
+var axios = require('axios')
 
 var express = require('express')
 var app = require('express')();
@@ -899,6 +900,23 @@ client.connect(function(err) {
 			// 	message: "Quiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
 			// })
 		}
+
+		if(!message)
+			axios({
+				method: 'post',
+				url: 'https://fcm.googleapis.com/fcm/send',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: "key=AAAAJEIJCgY:APA91bH95738SydTWvp1Ohdx5uGgVYUi9ll3mhghcgG2oVJQxG3QadBhNtjacTjidKjydli2H1ECxu7VYUGRccpeL4yPrV-eInCmqSLt6JtlLwNe9PSorUDqXXEQ6YnDeYLEWUlCu8RP"
+				},
+				data: {
+					registration_ids: empresa.messaging,
+					notification: {
+						title: empresa.ceo_name + ', no pude responder el mensaje de ' + sender,
+						body: mensaje
+					}
+				}
+			})
 
 		mensajes.push({message})
 
