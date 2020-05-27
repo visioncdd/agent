@@ -103,7 +103,7 @@ client.connect(function(err) {
 
 	app.post('/productos', async function(req, res) {
 
-		db1.collection('empresas').insertOne({
+		db1.collection('productos').insertOne({
 			...req.body,
 			createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
 			updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
