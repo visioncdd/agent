@@ -768,6 +768,13 @@ client.connect(function(err) {
 
 				break;
 
+				case 'direccion':
+
+					if(empresa.address)
+						message += "Estamos ubicados en " + empresa.address
+
+				break;
+
 				case 'question_type_payment':
 
 					// if(!data.length && solicitud.last_state == 'disponibilidad_multiple')
