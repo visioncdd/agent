@@ -366,7 +366,7 @@ client.connect(function(err) {
 					var date = moment(message.createdAt)
 					var now = moment()
 					var diff = now.diff(date, 'hour')
-					resolve(diff < 1)
+					resolve(diff < (empresa.horas_saludo || 24))
 				})
 
 			})
@@ -896,7 +896,7 @@ client.connect(function(err) {
 
 		var mensajes = []
 
-		if(!activa){
+		if(!activa && empresa.saludo){
 			mensajes.push({
 				message: `Hola, soy *${empresa.agent_name}*, el *asistente virtual* de *${empresa.name}*. `
 			})
