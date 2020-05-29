@@ -157,6 +157,26 @@ client.connect(function(err) {
 		
 	})
 
+	app.get('/mensajes-sin-respuesta', async function(req, res) {
+		db1.collection('mensajes-sin-respuesta').find({
+			company: req.headers.empresa
+		}, {
+			sort: {
+				createdAt: -1
+			}
+		}, (err, docs) => {
+			docs.toArray().then(mensajes => res.json(mensajes))
+		})
+	})
+
+	app.delete('/mensaje-sin-respuesta/:id', async function(req, res) {
+
+		db1.collection('mensajes-sin-respuesta').remove({ _id: ObjectId(req.params.id) }).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
 	app.post('/respuestas-automaticas', async function(req, res) {
 
 		db1.collection('respuestas-automaticas').insertOne({
@@ -196,6 +216,8 @@ client.connect(function(err) {
 				data: []
 			})
 		
+		var mensajes = []
+
 		function searchProduct(text){
 			return new Promise(resolve => {
 
@@ -280,8 +302,8 @@ client.connect(function(err) {
 					}
 				}], function(err, data){
 					
-					data.limit(1).toArray(function(err,list){
-						resolve(list.length && list[0].score >= 1 ? list[0].answer : null)
+					data.toArray(function(err,list){
+						resolve(list.filter(v => v.score >= 1).map(v => v.answer))
 					})
 				})
 
@@ -417,12 +439,22 @@ client.connect(function(err) {
 			})
 		}
 
-		
-
 		function saveMessage(message){
 			return new Promise(resolve => {
 
 				db1.collection('mensajes').insertOne({
+					...message,
+					createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+					updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+					company: req.headers.empresa
+				}, {}, (err, doc) => resolve(doc))
+
+			})
+		}
+
+		function saveMessageNotAnswered(message){
+			return new Promise(resolve => {
+				db1.collection('mensajes-sin-respuesta').insertOne({
 					...message,
 					createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
 					updatedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -547,8 +579,11 @@ client.connect(function(err) {
 		var automatica = await searchAuto(mensaje)
 		var activa = await chatActive(sender)
 
-		if(automatica){
-			message = automatica
+		if(automatica.length){
+			message = automatica[0]
+			mensajes = automatica.map(v => ({
+				message: v
+			}))
 			saveMessage({
 				message: mensaje,
 				sender,
@@ -892,9 +927,6 @@ client.connect(function(err) {
 		}
 
 
-		
-
-		var mensajes = []
 
 		if(!activa && empresa.saludo){
 			mensajes.push({
@@ -906,6 +938,13 @@ client.connect(function(err) {
 			// mensajes.push({
 			// 	message: "Quiero que sepas que aún estoy aprendiendo el lenguaje humano y te podría ayudar mejor si me haces 1 pregunta o pedido a la vez, además escribir sin errores ortográficos, gracias!"
 			// })
+		}
+
+		if(!message && empresa.guardar_mensaje_no_respondido){
+			saveMessageNotAnswered({
+				message: mensaje,
+				sender
+			})
 		}
 
 		if(!message && empresa.notificar_no_respuesta)
