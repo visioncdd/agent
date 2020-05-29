@@ -323,12 +323,6 @@ client.connect(function(err) {
 						company: req.headers.empresa
 					}
 				},{
-					$sort: {
-						score: {
-							$meta: "textScore"
-						}
-					}
-				},{
 					$project: {
 						message: 1,
 						_id: 1,
@@ -962,7 +956,7 @@ client.connect(function(err) {
 			})
 
 			mensajes.push({message})
-			
+
 		}
 
 
