@@ -960,6 +960,9 @@ client.connect(function(err) {
 				message_sended: message,
 				request: solicitud._id
 			})
+
+			mensajes.push({message})
+			
 		}
 
 
@@ -1002,7 +1005,7 @@ client.connect(function(err) {
 				}
 			})
 
-		mensajes.push({message})
+		
 
 		res.json({
 			data: mensajes
