@@ -908,7 +908,7 @@ client.connect(function(err) {
 			// })
 		}
 
-		if(!message)
+		if(!message && empresa.notificar_no_respuesta)
 			axios({
 				method: 'post',
 				url: 'https://fcm.googleapis.com/fcm/send',
