@@ -178,6 +178,15 @@ client.connect(function(err) {
 		
 	})
 
+	app.put('/mensaje-sin-respuesta/:id', async function(req, res) {
+
+		delete req.body._id
+		db1.collection('mensajes-sin-respuesta').updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body }, {upsert: true}).then(doc => {
+			res.json(true)
+		})
+		
+	})
+
 	app.post('/respuestas-automaticas', async function(req, res) {
 
 		db1.collection('respuestas-automaticas').insertOne({
