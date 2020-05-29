@@ -318,10 +318,7 @@ client.connect(function(err) {
 						$text: {
 							$search: text
 						},
-						company: req.headers.empresa,
-						ignore: {
-							$ne: true
-						}
+						company: req.headers.empresa
 					}
 				},{
 					$sort: {
