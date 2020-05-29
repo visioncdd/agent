@@ -36,6 +36,7 @@ client.connect(function(err) {
   db1.collection('acciones').createIndex({term: "text"})
   db1.collection('cantidades').createIndex({numero: "text",letra: "text"})
   db1.collection('respuestas-automaticas').createIndex({question: "text"})
+  db1.collection('mensajes-sin-respuesta').createIndex({message: "text"})
 
 
 	app.use(bodyParser.json()); 
@@ -304,6 +305,41 @@ client.connect(function(err) {
 					
 					data.toArray(function(err,list){
 						resolve(list.filter(v => v.score >= 1).map(v => v.answer))
+					})
+				})
+
+			})
+		}
+
+		function getMessageNotAnswered(text){
+			return new Promise(resolve => {
+
+				db1.collection('mensajes-sin-respuesta')
+				.aggregate([{
+					$match: {
+						$text: {
+							$search: text
+						},
+						company: req.headers.empresa
+					}
+				},{
+					$sort: {
+						score: {
+							$meta: "textScore"
+						}
+					}
+				},{
+					$project: {
+						message: 1,
+						_id: 1,
+						score: {
+							$meta: "textScore"
+						}
+					}
+				}], function(err, data){
+					
+					data.toArray(function(err,list){
+						resolve(list.filter(v => v.score >= 1).map(v => v.message))
 					})
 				})
 
@@ -941,10 +977,12 @@ client.connect(function(err) {
 		}
 
 		if(!message && empresa.guardar_mensaje_no_respondido){
-			saveMessageNotAnswered({
-				message: mensaje,
-				sender
-			})
+			var mensajes_sin_respuesta = await getMessageNotAnswered(mensaje)
+			if(!mensajes_sin_respuesta.length)
+				saveMessageNotAnswered({
+					message: mensaje,
+					sender
+				})
 		}
 
 		if(!message && empresa.notificar_no_respuesta)
