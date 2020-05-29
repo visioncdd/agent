@@ -323,6 +323,10 @@ client.connect(function(err) {
 						company: req.headers.empresa
 					}
 				},{
+					$sort: {
+						createdAt: 1
+					}
+				},{
 					$project: {
 						message: 1,
 						_id: 1,
