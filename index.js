@@ -288,9 +288,7 @@ client.connect(function(err) {
 					}
 				},{
 					$sort: {
-						score: {
-							$meta: "textScore"
-						}
+						createdAt: 1
 					}
 				},{
 					$project: {
@@ -324,7 +322,9 @@ client.connect(function(err) {
 					}
 				},{
 					$sort: {
-						createdAt: 1
+						score: {
+							$meta: "textScore"
+						}
 					}
 				},{
 					$project: {
