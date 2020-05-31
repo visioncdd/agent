@@ -578,6 +578,10 @@ client.connect(function(err) {
 				solicitud.last_state = "delivery_pedido"
 				message = " ¿Quieres que hagamos entrega a domicilio? " + (empresa.delivery_cost ? `Cuesta ${empresa.delivery_currency}${empresa.delivery_cost}` : 'No tiene costo')
 			}
+			else if(solicitud.delivery && !solicitud.address){
+				solicitud.last_state = "waiting_address"
+				message = " ¿Me indicas tu dirección? Por favor, escríbela en 1 solo mensaje."
+			}
 			else if(!solicitud.type_payment){
 				solicitud.last_state = "type_payment"
 				message = " ¿Vas a pagar en efectivo o transferencia?"
@@ -727,6 +731,12 @@ client.connect(function(err) {
 							message += finalMessage(solicitud,'delivery_pedido')
 						}
 					}
+				}
+
+				else if(solicitud.last_state == 'waiting_address' && mensaje.split('').length > 10){
+					message += "Ok."
+					solicitud.address = mensaje
+					message += nextStep(solicitud)
 				}
 
 				else if(solicitud.last_state == 'type_payment' && !action){
